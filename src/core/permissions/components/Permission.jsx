@@ -1,31 +1,21 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { usePermissions } from '../hooks/usePermissions';
 
 /**
  * Componente para controlar la visibilidad basada en permisos
- *
- * @param {Object} props
- * @param {string|Object} props.recurso - Recurso requerido (ej: 'usuarios') o objeto {recurso, accion}
- * @param {string} props.accion - Acción requerida (ej: 'crear', 'leer', 'actualizar', 'eliminar')
- * @param {string} props.role - Rol específico requerido
- * @param {Array} props.permissions - Array de permisos específicos [{recurso, accion}]
- * @param {Array} props.roles - Array de roles permitidos
- * @param {boolean} props.requireAll - Si se requieren TODOS los permisos (default: false - solo uno)
- * @param {React.ReactNode} props.children - Contenido a renderizar si tiene permisos
- * @param {React.ReactNode} props.fallback - Contenido alternativo si no tiene permisos
- * @param {Function} props.onUnauthorized - Callback cuando no tiene permisos
+ * Compatible con Material Tailwind usando forwardRef
  */
-const Permission = ({
-                        recurso,
-                        accion = 'leer',
-                        role,
-                        permissions = [],
-                        roles = [],
-                        requireAll = false,
-                        children,
-                        fallback = null,
-                        onUnauthorized,
-                    }) => {
+const Permission = forwardRef(({
+                                   recurso,
+                                   accion = 'leer',
+                                   role,
+                                   permissions = [],
+                                   roles = [],
+                                   requireAll = false,
+                                   children,
+                                   fallback = null,
+                                   onUnauthorized,
+                               }, ref) => {
     const { hasPermission, hasRole, hasAnyPermission, isSuperuser } = usePermissions();
 
     // Superusuarios tienen acceso completo
@@ -71,7 +61,10 @@ const Permission = ({
     }
 
     return hasAccess ? children : fallback;
-};
+});
+
+// Importante: Agregar displayName para debugging
+Permission.displayName = 'Permission';
 
 /**
  * Hook para usar permisos de forma condicional
@@ -86,13 +79,17 @@ export const useConditionalPermission = (recurso, accion = 'leer') => {
  * Componente HOC para proteger componentes con permisos
  */
 export const withPermission = (WrappedComponent, permissionConfig) => {
-    return function PermissionProtectedComponent(props) {
+    const PermissionProtectedComponent = forwardRef((props, ref) => {
         return (
             <Permission {...permissionConfig}>
-                <WrappedComponent {...props} />
+                <WrappedComponent {...props} ref={ref} />
             </Permission>
         );
-    };
+    });
+
+    PermissionProtectedComponent.displayName = `withPermission(${WrappedComponent.displayName || WrappedComponent.name})`;
+
+    return PermissionProtectedComponent;
 };
 
 export default Permission;

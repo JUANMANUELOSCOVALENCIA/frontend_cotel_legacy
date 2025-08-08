@@ -17,6 +17,7 @@ import Users from './core/permissions/pages/Users';
 import Roles from './core/permissions/pages/Roles';
 import Permissions from './core/permissions/pages/Permissions';
 import Profile from './core/auth/pages/Profile';
+import EmployeeMigration from "./core/permissions/pages/EmployeeMigration.jsx";
 
 function App() {
     const { isAuthenticated, loading, user } = useContext(AuthContext);
@@ -80,6 +81,7 @@ function App() {
                     <Route path="usuarios/usuarios" element={<Users />} />
                     <Route path="usuarios/roles" element={<Roles />} />
                     <Route path="usuarios/permisos" element={<Permissions />} />
+                    <Route path="usuarios/migracion" element={<EmployeeMigration />} />
                 </Route>
 
                 {/* Catch all */}

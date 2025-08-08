@@ -53,13 +53,13 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-gray-100 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="w-full max-w-md">
-                <Card className="shadow-2xl">
+                <Card className="shadow-lg border border-gray-200 bg-white">
                     <CardHeader
                         floated={false}
                         shadow={false}
-                        className="m-0 grid place-items-center bg-gradient-to-r from-orange-600 to-gray-600 py-8 px-4 text-center"
+                        className="m-0 grid place-items-center bg-orange-500 py-8 px-4 text-center border-b border-orange-600"
                     >
                         <div className="mb-4 h-20 w-20 text-white">
                             <IoPersonCircle className="w-full h-full" />
@@ -67,7 +67,7 @@ const Login = () => {
                         <Typography variant="h4" color="white" className="font-bold">
                             Sistema COTEL
                         </Typography>
-                        <Typography color="orange" className="mt-1 text-orange-100">
+                        <Typography color="white" className="mt-1 text-orange-100">
                             Inicia sesión con tu código COTEL
                         </Typography>
                     </CardHeader>
@@ -76,7 +76,7 @@ const Login = () => {
                         {error && (
                             <Alert
                                 color="red"
-                                className="mb-4"
+                                className="mb-4 bg-red-50 border border-red-200 text-red-700"
                                 dismissible={{
                                     onClose: clearError,
                                 }}
@@ -90,7 +90,7 @@ const Login = () => {
                                 <Typography
                                     variant="small"
                                     color="blue-gray"
-                                    className="mb-2 font-medium"
+                                    className="mb-2 font-medium text-gray-700"
                                 >
                                     Código COTEL
                                 </Typography>
@@ -98,7 +98,7 @@ const Login = () => {
                                     type="number"
                                     size="lg"
                                     placeholder="Ingresa tu código COTEL"
-                                    className="!border-t-blue-gray-200 focus:!border-t-orange-500"
+                                    className="!border-gray-300 focus:!border-orange-500 bg-white placeholder:text-gray-500 placeholder:opacity-100"
                                     labelProps={{
                                         className: "before:content-none after:content-none",
                                     }}
@@ -116,7 +116,7 @@ const Login = () => {
                                     error={!!errors.codigocotel}
                                 />
                                 {errors.codigocotel && (
-                                    <Typography variant="small" color="red" className="mt-1">
+                                    <Typography variant="small" color="red" className="mt-1 text-red-600">
                                         {errors.codigocotel.message}
                                     </Typography>
                                 )}
@@ -126,7 +126,7 @@ const Login = () => {
                                 <Typography
                                     variant="small"
                                     color="blue-gray"
-                                    className="mb-2 font-medium"
+                                    className="mb-2 font-medium text-gray-700"
                                 >
                                     Contraseña
                                 </Typography>
@@ -135,7 +135,7 @@ const Login = () => {
                                         type={showPassword ? 'text' : 'password'}
                                         size="lg"
                                         placeholder="Ingresa tu contraseña"
-                                        className="!border-t-blue-gray-200 focus:!border-t-orange-500 pr-10"
+                                        className="!border-gray-300 focus:!border-orange-500 pr-10 bg-white placeholder:text-gray-500 placeholder:opacity-100"
                                         labelProps={{
                                             className: "before:content-none after:content-none",
                                         }}
@@ -150,7 +150,7 @@ const Login = () => {
                                     />
                                     <button
                                         type="button"
-                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-gray-400 hover:text-blue-gray-600"
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-orange-500 transition-colors duration-200"
                                         onClick={togglePasswordVisibility}
                                     >
                                         {showPassword ? (
@@ -161,7 +161,7 @@ const Login = () => {
                                     </button>
                                 </div>
                                 {errors.password && (
-                                    <Typography variant="small" color="red" className="mt-1">
+                                    <Typography variant="small" color="red" className="mt-1 text-red-600">
                                         {errors.password.message}
                                     </Typography>
                                 )}
@@ -169,9 +169,9 @@ const Login = () => {
 
                             <Button
                                 type="submit"
-                                className="mt-6 bg-gradient-to-r from-orange-600 to-gray-600"
+                                className="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-medium shadow-md border border-orange-600 transition-all duration-200"
                                 fullWidth
-                                loading={isLoading}
+                                loading={isLoading || undefined}
                                 disabled={isLoading}
                             >
                                 {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
@@ -179,11 +179,11 @@ const Login = () => {
                         </form>
 
                         <div className="mt-6 text-center">
-                            <Typography variant="small" color="blue-gray">
+                            <Typography variant="small" color="blue-gray" className="text-gray-600">
                                 ¿No tienes una cuenta?{' '}
                                 <Link
                                     to="/migration"
-                                    className="text-orange-600 hover:text-orange-800 font-medium"
+                                    className="text-orange-500 hover:text-orange-600 font-medium transition-colors duration-200"
                                 >
                                     Migrar desde empleados
                                 </Link>
@@ -191,7 +191,7 @@ const Login = () => {
                         </div>
 
                         <div className="mt-4 text-center">
-                            <Typography variant="small" color="blue-gray" className="text-xs">
+                            <Typography variant="small" color="blue-gray" className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200">
                                 Si es tu primer ingreso, usa tu código COTEL como contraseña
                             </Typography>
                         </div>
