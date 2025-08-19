@@ -253,16 +253,24 @@ class PermissionService {
 
     async getUsers(params = {}) {
         try {
-            // ACTUALIZADO: Manejar parámetro incluir_eliminados
             const cleanParams = { ...params };
 
-            // Si incluir_eliminados es true, agregar with_deleted=true al query
-            if (cleanParams.incluir_eliminados === true || cleanParams.incluir_eliminados === 'true') {
+            // CORREGIDO: Manejo mejorado de filtros de eliminados
+            if (cleanParams.eliminados_only === 'true') {
+                // NUEVO: Solo usuarios eliminados
                 cleanParams.with_deleted = 'true';
-                delete cleanParams.incluir_eliminados;
+                cleanParams.eliminados_only = 'true';
+            } else if (cleanParams.with_deleted === 'true') {
+                // Incluir eliminados con activos
+                cleanParams.with_deleted = 'true';
             }
 
+            // Limpiar parámetros que no son del backend
+            delete cleanParams.incluir_eliminados;
+
             const queryString = buildQuery(cleanParams);
+            console.log('🔍 Query string enviado:', queryString);
+
             const response = await api.get(`${ENDPOINTS.USUARIOS}${queryString}`);
             return {
                 success: true,

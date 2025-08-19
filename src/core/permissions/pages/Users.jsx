@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Card,
     CardBody,
@@ -50,6 +50,7 @@ import toast from 'react-hot-toast';
 import { useUsersCRUD, useRolesCRUD } from '../hooks/usePermissions';
 import Permission from '../components/Permission';
 import Loader from '../../layout/Loader';
+import {debounce} from "lodash";
 
 const Users = () => {
     // States
@@ -106,7 +107,25 @@ const Users = () => {
 
     // Load data on mount
     useEffect(() => {
-        loadUsers({ page: currentPage, ...filters });
+        // CORREGIDO: Mapear correctamente el filtro de eliminados
+        const backendFilters = { ...filters };
+
+        // NUEVO: Manejo específico del filtro incluir_eliminados
+        if (filters.incluir_eliminados === 'true') {
+            // Incluir eliminados junto con activos
+            backendFilters.with_deleted = 'true';
+            delete backendFilters.incluir_eliminados;
+        } else if (filters.incluir_eliminados === 'only') {
+            // FIJO: Solo usuarios eliminados
+            backendFilters.with_deleted = 'true';
+            backendFilters.eliminados_only = 'true';
+            delete backendFilters.incluir_eliminados;
+        } else {
+            // Solo usuarios activos (comportamiento por defecto)
+            delete backendFilters.incluir_eliminados;
+        }
+
+        loadUsers({ page: currentPage, ...backendFilters });
         loadRoles({ page_size: 100 });
     }, [currentPage, filters, loadUsers, loadRoles]);
 
