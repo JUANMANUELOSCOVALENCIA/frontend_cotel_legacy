@@ -253,7 +253,16 @@ class PermissionService {
 
     async getUsers(params = {}) {
         try {
-            const queryString = buildQuery(params);
+            // ACTUALIZADO: Manejar parámetro incluir_eliminados
+            const cleanParams = { ...params };
+
+            // Si incluir_eliminados es true, agregar with_deleted=true al query
+            if (cleanParams.incluir_eliminados === true || cleanParams.incluir_eliminados === 'true') {
+                cleanParams.with_deleted = 'true';
+                delete cleanParams.incluir_eliminados;
+            }
+
+            const queryString = buildQuery(cleanParams);
             const response = await api.get(`${ENDPOINTS.USUARIOS}${queryString}`);
             return {
                 success: true,
@@ -421,6 +430,7 @@ class PermissionService {
         }
     }
 
+    // NUEVO: Función para restaurar usuarios eliminados
     async restoreUser(id) {
         try {
             const response = await api.post(ENDPOINTS.RESTAURAR_USUARIO(id));
@@ -490,6 +500,7 @@ class PermissionService {
 
     // ========== USUARIOS ELIMINADOS ==========
 
+    // ACTUALIZADO: Función mejorada para obtener usuarios eliminados
     async getDeletedUsers(params = {}) {
         try {
             const queryString = buildQuery(params);

@@ -42,6 +42,8 @@ import {
     IoWarning,
     IoCheckmark,
     IoClose,
+    IoReload,
+    IoArchive,
 } from 'react-icons/io5';
 import { useForm, Controller } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -63,6 +65,7 @@ const Users = () => {
         tipo: '',
         is_active: '',
         password_status: '',
+        incluir_eliminados: '', // NUEVO: filtro para incluir eliminados
     });
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -130,13 +133,27 @@ const Users = () => {
     };
 
     const handleEditUser = async (data) => {
-        const result = await updateUser(selectedUser.id, data);
+        console.log('📤 Datos del formulario:', data);
+        console.log('👤 Usuario editando:', selectedUser);
+
+        const updateData = {
+            nombres: data.nombres,
+            apellidopaterno: data.apellidopaterno,
+            apellidomaterno: data.apellidomaterno,
+            rol: parseInt(data.rol) // Convertir a entero para el backend
+        };
+
+        console.log('🚀 Datos finales para backend:', updateData);
+
+        const result = await updateUser(selectedUser.id, updateData);
         if (result.success) {
             toast.success('Usuario actualizado correctamente');
             setShowEditDialog(false);
             setSelectedUser(null);
             reset();
+            loadUsers({ page: currentPage, ...filters });
         } else {
+            console.error('❌ Error:', result.error);
             toast.error(result.error);
         }
     };
@@ -154,6 +171,9 @@ const Users = () => {
             case 'delete':
                 result = await deleteUser(user.id);
                 break;
+            case 'restore':
+                result = await restoreUser(user.id);
+                break;
             case 'resetPassword':
                 result = await resetUserPassword(user.id, {
                     motivo: 'Reseteo solicitado por administrador'
@@ -161,9 +181,6 @@ const Users = () => {
                 break;
             case 'unlock':
                 result = await unlockUser(user.id);
-                break;
-            case 'restore':
-                result = await restoreUser(user.id);
                 break;
             default:
                 return;
@@ -193,6 +210,8 @@ const Users = () => {
     };
 
     const getUserStatusColor = (user) => {
+        // Nuevo: verificar si está eliminado primero
+        if (user.eliminado) return 'gray';
         if (!user.is_active) return 'red';
         if (user.esta_bloqueado) return 'orange';
         if (user.estado_password === 'reset_requerido') return 'yellow';
@@ -201,6 +220,8 @@ const Users = () => {
     };
 
     const getUserStatusText = (user) => {
+        // Nuevo: verificar si está eliminado primero
+        if (user.eliminado) return 'Eliminado';
         if (!user.is_active) return 'Inactivo';
         if (user.esta_bloqueado) return 'Bloqueado';
         if (user.estado_password === 'reset_requerido') return 'Reset Requerido';
@@ -213,16 +234,58 @@ const Users = () => {
             case 'activate': return 'activar';
             case 'deactivate': return 'desactivar';
             case 'delete': return 'eliminar';
+            case 'restore': return 'restaurar';
             case 'resetPassword': return 'resetear la contraseña de';
             case 'unlock': return 'desbloquear';
-            case 'restore': return 'restaurar';
             default: return '';
+        }
+    };
+
+    const canPerformAction = (action, user) => {
+        switch (action) {
+            case 'restore':
+                return user.eliminado;
+            case 'delete':
+                return !user.eliminado;
+            case 'activate':
+            case 'deactivate':
+            case 'resetPassword':
+            case 'unlock':
+                return !user.eliminado;
+            default:
+                return true;
         }
     };
 
     if (usersLoading && users.length === 0) {
         return <Loader message="Cargando usuarios..." />;
     }
+    const openEditDialog = (user) => {
+        console.log('🔧 Abriendo modal para editar usuario:', user);
+        console.log('🔧 rol_id del usuario:', user.rol_id);
+        console.log('🔧 rol_nombre del usuario:', user.rol_nombre);
+
+        // ✅ SOLUCIÓN: Usar user.rol_id que SÍ existe
+        const rolId = user.rol_id || '';
+
+        console.log('🎯 ID del rol a usar:', rolId);
+
+        // Establecer el usuario seleccionado
+        setSelectedUser(user);
+
+        // Mapear correctamente los datos del usuario al formulario
+        reset({
+            nombres: user.nombres || '',
+            apellidopaterno: user.apellidopaterno || '',
+            apellidomaterno: user.apellidomaterno || '',
+            rol: rolId // ✅ Usar rol_id del usuario
+        });
+
+        console.log('📝 Formulario inicializado con rol:', rolId);
+
+        // Abrir el modal
+        setShowEditDialog(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -249,7 +312,7 @@ const Users = () => {
                         </Button>
                     </Permission>
 
-                    <Permission recurso="empleados" accion="leer">
+                    <Permission recurso="usuarios" accion="leer">
                         <Button
                             variant="outlined"
                             className="flex items-center gap-2"
@@ -272,7 +335,7 @@ const Users = () => {
             {/* Filters */}
             <Card>
                 <CardBody className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                         <div className="md:col-span-2">
                             <Input
                                 label="Buscar usuarios"
@@ -306,6 +369,7 @@ const Users = () => {
                             <Option value="migrado">Migrado</Option>
                         </Select>
 
+                        {/* MODIFICADO: Filtro de estado actualizado */}
                         <Select
                             label="Estado"
                             value={filters.is_active}
@@ -315,7 +379,42 @@ const Users = () => {
                             <Option value="true">Activos</Option>
                             <Option value="false">Inactivos</Option>
                         </Select>
+
+                        {/* NUEVO: Filtro para incluir eliminados */}
+                        <Select
+                            label="Incluir eliminados"
+                            value={filters.incluir_eliminados}
+                            onChange={(value) => handleFilterChange('incluir_eliminados', value)}
+                        >
+                            <Option value="">Solo activos</Option>
+                            <Option value="true">Incluir eliminados</Option>
+                            <Option value="only">Solo eliminados</Option>
+                        </Select>
                     </div>
+
+                    {/* NUEVO: Mostrar información del filtro activo */}
+                    {filters.incluir_eliminados && (
+                        <div className="mt-3 flex items-center gap-2">
+                            {filters.incluir_eliminados === 'true' && (
+                                <Chip
+                                    variant="ghost"
+                                    color="blue"
+                                    size="sm"
+                                    value="Incluyendo usuarios eliminados"
+                                    icon={<IoArchive className="h-3 w-3" />}
+                                />
+                            )}
+                            {filters.incluir_eliminados === 'only' && (
+                                <Chip
+                                    variant="ghost"
+                                    color="gray"
+                                    size="sm"
+                                    value="Solo usuarios eliminados"
+                                    icon={<IoTrash className="h-3 w-3" />}
+                                />
+                            )}
+                        </div>
+                    )}
                 </CardBody>
             </Card>
 
@@ -348,7 +447,12 @@ const Users = () => {
                         </div>
                     ) : users.length === 0 ? (
                         <div className="text-center py-8">
-                            <Typography color="gray">No se encontraron usuarios</Typography>
+                            <Typography color="gray">
+                                {filters.incluir_eliminados === 'only'
+                                    ? 'No se encontraron usuarios eliminados'
+                                    : 'No se encontraron usuarios'
+                                }
+                            </Typography>
                         </div>
                     ) : (
                         <table className="w-full min-w-max table-auto text-left">
@@ -388,12 +492,24 @@ const Users = () => {
                             </thead>
                             <tbody>
                             {users.map((user) => (
-                                <tr key={user.id} className="hover:bg-gray-50">
+                                <tr key={user.id} className={`hover:bg-gray-50 ${user.eliminado ? 'opacity-60' : ''}`}>
                                     <td className="p-4">
                                         <div className="flex flex-col">
-                                            <Typography variant="small" color="blue-gray" className="font-medium">
-                                                {user.nombre_completo}
-                                            </Typography>
+                                            <div className="flex items-center gap-2">
+                                                <Typography variant="small" color="blue-gray" className="font-medium">
+                                                    {user.nombre_completo}
+                                                </Typography>
+                                                {/* NUEVO: Icono para usuarios eliminados */}
+                                                {user.eliminado && (
+                                                    <Chip
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        color="gray"
+                                                        value="Eliminado"
+                                                        icon={<IoTrash className="h-3 w-3" />}
+                                                    />
+                                                )}
+                                            </div>
                                             <Typography variant="small" color="gray" className="font-normal">
                                                 COTEL: {user.codigocotel}
                                             </Typography>
@@ -407,7 +523,8 @@ const Users = () => {
                                                 value={user.rol_nombre || 'Sin rol'}
                                                 color={user.rol_nombre ? 'blue' : 'gray'}
                                             />
-                                            {user.rol_nombre && (
+                                            {/* Solo permitir cambio de rol si no está eliminado */}
+                                            {user.rol_nombre && !user.eliminado && (
                                                 <Menu>
                                                     <MenuHandler>
                                                         <IconButton variant="text" size="sm">
@@ -470,21 +587,20 @@ const Users = () => {
                                                 </Tooltip>
                                             </Permission>
 
-                                            <Permission recurso="usuarios" accion="actualizar">
-                                                <Tooltip content="Editar">
-                                                    <IconButton
-                                                        variant="text"
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            setSelectedUser(user);
-                                                            setShowEditDialog(true);
-                                                            reset(user);
-                                                        }}
-                                                    >
-                                                        <IoCreate className="h-4 w-4" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Permission>
+                                            {/* Solo mostrar editar si no está eliminado */}
+                                            {!user.eliminado && (
+                                                <Permission recurso="usuarios" accion="actualizar">
+                                                    <Tooltip content="Editar">
+                                                        <IconButton
+                                                            variant="text"
+                                                            size="sm"
+                                                            onClick={() => openEditDialog(user)}
+                                                        >
+                                                            <IoCreate className="h-4 w-4" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Permission>
+                                            )}
 
                                             <Menu>
                                                 <MenuHandler>
@@ -493,53 +609,71 @@ const Users = () => {
                                                     </IconButton>
                                                 </MenuHandler>
                                                 <MenuList>
-                                                    <Permission recurso="usuarios" accion="actualizar">
-                                                        {user.is_active ? (
-                                                            <MenuItem
-                                                                className="flex items-center gap-2 text-red-500"
-                                                                onClick={() => openConfirmDialog('deactivate', user)}
-                                                            >
-                                                                <IoCloseCircle className="h-4 w-4" />
-                                                                Desactivar
-                                                            </MenuItem>
-                                                        ) : (
+                                                    {/* NUEVO: Opción de restaurar para usuarios eliminados */}
+                                                    {user.eliminado && (
+                                                        <Permission recurso="usuarios" accion="actualizar">
                                                             <MenuItem
                                                                 className="flex items-center gap-2 text-green-500"
-                                                                onClick={() => openConfirmDialog('activate', user)}
+                                                                onClick={() => openConfirmDialog('restore', user)}
                                                             >
-                                                                <IoCheckmarkCircle className="h-4 w-4" />
-                                                                Activar
+                                                                <IoReload className="h-4 w-4" />
+                                                                Restaurar
                                                             </MenuItem>
-                                                        )}
+                                                        </Permission>
+                                                    )}
 
-                                                        <MenuItem
-                                                            className="flex items-center gap-2"
-                                                            onClick={() => openConfirmDialog('resetPassword', user)}
-                                                        >
-                                                            <IoKey className="h-4 w-4" />
-                                                            Resetear Contraseña
-                                                        </MenuItem>
+                                                    {/* Acciones solo para usuarios no eliminados */}
+                                                    {!user.eliminado && (
+                                                        <>
+                                                            <Permission recurso="usuarios" accion="actualizar">
+                                                                {user.is_active ? (
+                                                                    <MenuItem
+                                                                        className="flex items-center gap-2 text-red-500"
+                                                                        onClick={() => openConfirmDialog('deactivate', user)}
+                                                                    >
+                                                                        <IoCloseCircle className="h-4 w-4" />
+                                                                        Desactivar
+                                                                    </MenuItem>
+                                                                ) : (
+                                                                    <MenuItem
+                                                                        className="flex items-center gap-2 text-green-500"
+                                                                        onClick={() => openConfirmDialog('activate', user)}
+                                                                    >
+                                                                        <IoCheckmarkCircle className="h-4 w-4" />
+                                                                        Activar
+                                                                    </MenuItem>
+                                                                )}
 
-                                                        {user.esta_bloqueado && (
-                                                            <MenuItem
-                                                                className="flex items-center gap-2 text-blue-500"
-                                                                onClick={() => openConfirmDialog('unlock', user)}
-                                                            >
-                                                                <IoLockOpen className="h-4 w-4" />
-                                                                Desbloquear
-                                                            </MenuItem>
-                                                        )}
-                                                    </Permission>
+                                                                <MenuItem
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() => openConfirmDialog('resetPassword', user)}
+                                                                >
+                                                                    <IoKey className="h-4 w-4" />
+                                                                    Resetear Contraseña
+                                                                </MenuItem>
 
-                                                    <Permission recurso="usuarios" accion="eliminar">
-                                                        <MenuItem
-                                                            className="flex items-center gap-2 text-red-500"
-                                                            onClick={() => openConfirmDialog('delete', user)}
-                                                        >
-                                                            <IoTrash className="h-4 w-4" />
-                                                            Eliminar
-                                                        </MenuItem>
-                                                    </Permission>
+                                                                {user.esta_bloqueado && (
+                                                                    <MenuItem
+                                                                        className="flex items-center gap-2 text-blue-500"
+                                                                        onClick={() => openConfirmDialog('unlock', user)}
+                                                                    >
+                                                                        <IoLockOpen className="h-4 w-4" />
+                                                                        Desbloquear
+                                                                    </MenuItem>
+                                                                )}
+                                                            </Permission>
+
+                                                            <Permission recurso="usuarios" accion="eliminar">
+                                                                <MenuItem
+                                                                    className="flex items-center gap-2 text-red-500"
+                                                                    onClick={() => openConfirmDialog('delete', user)}
+                                                                >
+                                                                    <IoTrash className="h-4 w-4" />
+                                                                    Eliminar
+                                                                </MenuItem>
+                                                            </Permission>
+                                                        </>
+                                                    )}
                                                 </MenuList>
                                             </Menu>
                                         </div>
@@ -690,20 +824,32 @@ const Users = () => {
                                 name="rol"
                                 control={control}
                                 rules={{ required: 'El rol es obligatorio' }}
-                                render={({ field }) => (
-                                    <Select
-                                        label="Rol *"
-                                        value={field.value?.toString()}
-                                        onChange={(value) => field.onChange(parseInt(value))}
-                                        error={!!errors.rol}
-                                    >
-                                        {roles.map((role) => (
-                                            <Option key={role.id} value={role.id.toString()}>
-                                                {role.nombre}
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                )}
+                                render={({ field }) => {
+                                    console.log('🎯 Valor actual del campo rol:', field.value);
+                                    console.log('🎯 Tipo del valor:', typeof field.value);
+                                    console.log('🎯 Usuario seleccionado:', selectedUser?.nombre_completo);
+                                    console.log('🎯 Roles disponibles:', roles.length, 'roles');
+
+                                    return (
+                                        <Select
+                                            label="Rol *"
+                                            value={field.value ? field.value.toString() : ''}
+                                            onChange={(value) => {
+                                                console.log('🔄 Nuevo rol seleccionado:', value, typeof value);
+                                                const roleId = parseInt(value);
+                                                console.log('🔄 ID del rol convertido:', roleId);
+                                                field.onChange(roleId);
+                                            }}
+                                            error={!!errors.rol}
+                                        >
+                                            {roles.map((role) => (
+                                                <Option key={role.id} value={role.id.toString()}>
+                                                    {role.nombre}
+                                                </Option>
+                                            ))}
+                                        </Select>
+                                    );
+                                }}
                             />
                         </div>
 
@@ -791,8 +937,19 @@ const Users = () => {
 
                             {confirmAction.action === 'delete' && (
                                 <Typography variant="small" color="red" className="mt-2">
-                                    Esta acción no se puede deshacer.
+                                    Esta acción eliminará lógicamente al usuario. Podrá ser restaurado posteriormente.
                                 </Typography>
+                            )}
+
+                            {confirmAction.action === 'restore' && (
+                                <Alert color="green" className="mt-4">
+                                    <Typography variant="small">
+                                        <strong>Al restaurar:</strong><br />
+                                        • El usuario volverá a estar activo en el sistema<br />
+                                        • Recuperará su acceso y permisos<br />
+                                        • Aparecerá nuevamente en la lista de usuarios activos
+                                    </Typography>
+                                </Alert>
                             )}
                         </div>
                     ) : (
@@ -810,11 +967,12 @@ const Users = () => {
                         Cancelar
                     </Button>
                     <Button
-                        color="orange"
+                        color={confirmAction?.action === 'delete' ? 'red' :
+                            confirmAction?.action === 'restore' ? 'green' : 'orange'}
                         loading={usersLoading}
                         onClick={() => confirmAction && handleUserAction(confirmAction.action, confirmAction.user)}
                     >
-                        Confirmar
+                        {confirmAction?.action === 'restore' ? 'Restaurar' : 'Confirmar'}
                     </Button>
                 </DialogFooter>
             </Dialog>

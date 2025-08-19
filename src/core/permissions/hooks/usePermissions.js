@@ -292,23 +292,65 @@ export const useUsersCRUD = () => {
         setLoading(true);
         setError(null);
 
+        console.log('🔄 loadUsers: Iniciando carga con params:', params);
+
         try {
             const result = await permissionService.getUsers(params);
 
+            console.log('📡 loadUsers: Respuesta del servicio:', result);
+
             if (result.success) {
-                setUsers(result.data.results || result.data);
+                const usersData = result.data.results || result.data;
+
+                console.log('👥 loadUsers: Usuarios obtenidos:', usersData.length);
+                console.log('👥 loadUsers: Primer usuario completo:', usersData[0]);
+                console.log('👥 loadUsers: Estructura del primer usuario:', usersData[0] ? Object.keys(usersData[0]) : 'No hay usuarios');
+
+                // Verificar específicamente los campos de rol
+                if (usersData.length > 0) {
+                    const primerUsuario = usersData[0];
+                    console.log('🎭 loadUsers: Análisis del rol del primer usuario:');
+                    console.log('   - rol:', primerUsuario.rol, typeof primerUsuario.rol);
+                    console.log('   - rol_nombre:', primerUsuario.rol_nombre);
+                    console.log('   - rol_id:', primerUsuario.rol_id);
+
+                    // Buscar otros posibles campos de rol
+                    const camposRol = Object.keys(primerUsuario).filter(key =>
+                        key.toLowerCase().includes('rol') || key.toLowerCase().includes('role')
+                    );
+                    console.log('   - Campos relacionados con rol:', camposRol);
+
+                    // Verificar todos los usuarios
+                    const usuariosConRol = usersData.filter(u => u.rol !== null && u.rol !== undefined);
+                    const usuariosSinRol = usersData.filter(u => u.rol === null || u.rol === undefined);
+                    console.log('📊 loadUsers: Estadísticas de roles:');
+                    console.log('   - Usuarios CON rol:', usuariosConRol.length);
+                    console.log('   - Usuarios SIN rol:', usuariosSinRol.length);
+
+                    if (usuariosConRol.length > 0) {
+                        console.log('   - Ejemplo de usuario CON rol:', usuariosConRol[0]);
+                    }
+                    if (usuariosSinRol.length > 0) {
+                        console.log('   - Ejemplo de usuario SIN rol:', usuariosSinRol[0]);
+                    }
+                }
+
+                setUsers(usersData);
                 setPagination({
                     count: result.data.count || 0,
                     next: result.data.next || null,
                     previous: result.data.previous || null,
                 });
             } else {
+                console.error('❌ loadUsers: Error del servicio:', result.error);
                 setError(result.error);
             }
         } catch (err) {
+            console.error('❌ loadUsers: Excepción capturada:', err);
             setError('Error al cargar usuarios');
         } finally {
             setLoading(false);
+            console.log('✅ loadUsers: Carga completada');
         }
     }, []);
 
@@ -334,21 +376,31 @@ export const useUsersCRUD = () => {
 
     const updateUser = useCallback(async (id, userData) => {
         setLoading(true);
+        console.log('🔄 updateUser: Actualizando usuario ID:', id);
+        console.log('📤 updateUser: Datos a enviar:', userData);
+
         try {
             const result = await permissionService.updateUser(id, userData);
+
+            console.log('📡 updateUser: Respuesta del servicio:', result);
+
             if (result.success) {
-                await loadUsers();
+                console.log('✅ updateUser: Usuario actualizado correctamente');
+                await loadUsers(); // Esto debería recargar con los datos actualizados
                 return { success: true, data: result.data };
             } else {
+                console.error('❌ updateUser: Error del servicio:', result.error);
                 setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
+            console.error('❌ updateUser: Excepción capturada:', err);
             const error = 'Error al actualizar usuario';
             setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
+            console.log('✅ updateUser: Operación completada');
         }
     }, [loadUsers]);
 
@@ -472,6 +524,27 @@ export const useUsersCRUD = () => {
         }
     }, [loadUsers]);
 
+    // NUEVO: Función para restaurar usuarios eliminados
+    const restoreUser = useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const result = await permissionService.restoreUser(id);
+            if (result.success) {
+                await loadUsers();
+                return { success: true, message: result.message };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error al restaurar usuario';
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, [loadUsers]);
+
     return {
         users,
         loading,
@@ -486,6 +559,7 @@ export const useUsersCRUD = () => {
         resetUserPassword,
         changeUserRole,
         unlockUser,
+        restoreUser, // NUEVO: Función para restaurar
         clearError: () => setError(null),
     };
 };
