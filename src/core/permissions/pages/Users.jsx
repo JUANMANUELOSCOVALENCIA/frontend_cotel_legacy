@@ -47,10 +47,10 @@ import {
 } from 'react-icons/io5';
 import { useForm, Controller } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { debounce } from 'lodash';
 import { useUsersCRUD, useRolesCRUD } from '../hooks/usePermissions';
 import Permission from '../components/Permission';
 import Loader from '../../layout/Loader';
-import {debounce} from "lodash";
 
 const Users = () => {
     // States
@@ -60,13 +60,18 @@ const Users = () => {
     const [showMigrateDialog, setShowMigrateDialog] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
+
+    // NUEVO: State separado para el input de búsqueda (valor local)
+    const [searchInput, setSearchInput] = useState('');
+
+    // State para filtros (valor que se envía al backend)
     const [filters, setFilters] = useState({
         search: '',
         rol: '',
         tipo: '',
         is_active: '',
         password_status: '',
-        incluir_eliminados: '', // NUEVO: filtro para incluir eliminados
+        incluir_eliminados: '',
     });
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -105,42 +110,63 @@ const Users = () => {
         watch,
     } = useForm();
 
-    // Load data on mount
+    // SOLUCIÓN 1: Implementar debounce para la búsqueda
+    const debouncedSearch = useMemo(
+        () => debounce((searchValue) => {
+            console.log('🔍 Ejecutando búsqueda debounced:', searchValue);
+            setFilters(prev => ({ ...prev, search: searchValue }));
+            setCurrentPage(1); // Reset página al buscar
+        }, 300), // 300ms de delay
+        []
+    );
+
+    // SOLUCIÓN 2: Manejar cambios en el input sin disparar búsqueda inmediata
+    const handleSearchInputChange = useCallback((value) => {
+        console.log('⌨️ Input cambiado:', value);
+        setSearchInput(value); // Actualizar input inmediatamente
+        debouncedSearch(value); // Buscar con delay
+    }, [debouncedSearch]);
+
+    // SOLUCIÓN 3: Limpiar debounce al desmontar componente
     useEffect(() => {
-        // CORREGIDO: Mapear correctamente el filtro de eliminados
-        const backendFilters = { ...filters };
+        return () => {
+            debouncedSearch.cancel();
+        };
+    }, [debouncedSearch]);
 
-        // NUEVO: Manejo específico del filtro incluir_eliminados
-        if (filters.incluir_eliminados === 'true') {
-            // Incluir eliminados junto con activos
-            backendFilters.with_deleted = 'true';
-            delete backendFilters.incluir_eliminados;
-        } else if (filters.incluir_eliminados === 'only') {
-            // FIJO: Solo usuarios eliminados
-            backendFilters.with_deleted = 'true';
-            backendFilters.eliminados_only = 'true';
-            delete backendFilters.incluir_eliminados;
-        } else {
-            // Solo usuarios activos (comportamiento por defecto)
-            delete backendFilters.incluir_eliminados;
+    // *** MOVER ESTAS FUNCIONES ANTES DEL useMemo ***
+    const getUserStatusColor = useCallback((user) => {
+        if (user.eliminado) return 'gray';
+        if (!user.is_active) return 'red';
+        if (user.esta_bloqueado) return 'orange';
+        if (user.estado_password === 'reset_requerido') return 'yellow';
+        if (user.estado_password === 'cambio_requerido') return 'blue';
+        return 'green';
+    }, []);
+
+    const getUserStatusText = useCallback((user) => {
+        if (user.eliminado) return 'Eliminado';
+        if (!user.is_active) return 'Inactivo';
+        if (user.esta_bloqueado) return 'Bloqueado';
+        if (user.estado_password === 'reset_requerido') return 'Reset Requerido';
+        if (user.estado_password === 'cambio_requerido') return 'Cambio Requerido';
+        return 'Activo';
+    }, []);
+
+    const getActionText = useCallback((action) => {
+        switch (action) {
+            case 'activate': return 'activar';
+            case 'deactivate': return 'desactivar';
+            case 'delete': return 'eliminar';
+            case 'restore': return 'restaurar';
+            case 'resetPassword': return 'resetear la contraseña de';
+            case 'unlock': return 'desbloquear';
+            default: return '';
         }
-
-        loadUsers({ page: currentPage, ...backendFilters });
-        loadRoles({ page_size: 100 });
-    }, [currentPage, filters, loadUsers, loadRoles]);
-
-    // Handlers
-    const handleSearch = useCallback((value) => {
-        setFilters(prev => ({ ...prev, search: value }));
-        setCurrentPage(1);
     }, []);
 
-    const handleFilterChange = useCallback((key, value) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
-        setCurrentPage(1);
-    }, []);
-
-    const handleCreateUser = async (data) => {
+    // Handlers memoizados
+    const handleCreateUser = useCallback(async (data) => {
         const result = await createUser(data);
         if (result.success) {
             toast.success('Usuario creado correctamente');
@@ -149,9 +175,9 @@ const Users = () => {
         } else {
             toast.error(result.error);
         }
-    };
+    }, [createUser, reset]);
 
-    const handleEditUser = async (data) => {
+    const handleEditUser = useCallback(async (data) => {
         console.log('📤 Datos del formulario:', data);
         console.log('👤 Usuario editando:', selectedUser);
 
@@ -159,7 +185,7 @@ const Users = () => {
             nombres: data.nombres,
             apellidopaterno: data.apellidopaterno,
             apellidomaterno: data.apellidomaterno,
-            rol: parseInt(data.rol) // Convertir a entero para el backend
+            rol: parseInt(data.rol)
         };
 
         console.log('🚀 Datos finales para backend:', updateData);
@@ -170,14 +196,13 @@ const Users = () => {
             setShowEditDialog(false);
             setSelectedUser(null);
             reset();
-            loadUsers({ page: currentPage, ...filters });
         } else {
             console.error('❌ Error:', result.error);
             toast.error(result.error);
         }
-    };
+    }, [selectedUser, updateUser, reset]);
 
-    const handleUserAction = async (action, user) => {
+    const handleUserAction = useCallback(async (action, user) => {
         let result;
 
         switch (action) {
@@ -212,99 +237,341 @@ const Users = () => {
         }
         setConfirmAction(null);
         setShowConfirmDialog(false);
-    };
+    }, [activateUser, deactivateUser, deleteUser, restoreUser, resetUserPassword, unlockUser]);
 
-    const handleChangeRole = async (userId, roleId) => {
+    const handleChangeRole = useCallback(async (userId, roleId) => {
         const result = await changeUserRole(userId, { rol_id: roleId });
         if (result.success) {
             toast.success(result.message);
         } else {
             toast.error(result.error);
         }
-    };
+    }, [changeUserRole]);
 
-    const openConfirmDialog = (action, user) => {
+    const openConfirmDialog = useCallback((action, user) => {
         setConfirmAction({ action, user });
         setShowConfirmDialog(true);
-    };
+    }, []);
 
-    const getUserStatusColor = (user) => {
-        // Nuevo: verificar si está eliminado primero
-        if (user.eliminado) return 'gray';
-        if (!user.is_active) return 'red';
-        if (user.esta_bloqueado) return 'orange';
-        if (user.estado_password === 'reset_requerido') return 'yellow';
-        if (user.estado_password === 'cambio_requerido') return 'blue';
-        return 'green';
-    };
-
-    const getUserStatusText = (user) => {
-        // Nuevo: verificar si está eliminado primero
-        if (user.eliminado) return 'Eliminado';
-        if (!user.is_active) return 'Inactivo';
-        if (user.esta_bloqueado) return 'Bloqueado';
-        if (user.estado_password === 'reset_requerido') return 'Reset Requerido';
-        if (user.estado_password === 'cambio_requerido') return 'Cambio Requerido';
-        return 'Activo';
-    };
-
-    const getActionText = (action) => {
-        switch (action) {
-            case 'activate': return 'activar';
-            case 'deactivate': return 'desactivar';
-            case 'delete': return 'eliminar';
-            case 'restore': return 'restaurar';
-            case 'resetPassword': return 'resetear la contraseña de';
-            case 'unlock': return 'desbloquear';
-            default: return '';
-        }
-    };
-
-    const canPerformAction = (action, user) => {
-        switch (action) {
-            case 'restore':
-                return user.eliminado;
-            case 'delete':
-                return !user.eliminado;
-            case 'activate':
-            case 'deactivate':
-            case 'resetPassword':
-            case 'unlock':
-                return !user.eliminado;
-            default:
-                return true;
-        }
-    };
-
-    if (usersLoading && users.length === 0) {
-        return <Loader message="Cargando usuarios..." />;
-    }
-    const openEditDialog = (user) => {
+    const openEditDialog = useCallback((user) => {
         console.log('🔧 Abriendo modal para editar usuario:', user);
         console.log('🔧 rol_id del usuario:', user.rol_id);
         console.log('🔧 rol_nombre del usuario:', user.rol_nombre);
 
-        // ✅ SOLUCIÓN: Usar user.rol_id que SÍ existe
         const rolId = user.rol_id || '';
-
         console.log('🎯 ID del rol a usar:', rolId);
 
-        // Establecer el usuario seleccionado
         setSelectedUser(user);
-
-        // Mapear correctamente los datos del usuario al formulario
         reset({
             nombres: user.nombres || '',
             apellidopaterno: user.apellidopaterno || '',
             apellidomaterno: user.apellidomaterno || '',
-            rol: rolId // ✅ Usar rol_id del usuario
+            rol: rolId
         });
 
         console.log('📝 Formulario inicializado con rol:', rolId);
-
-        // Abrir el modal
         setShowEditDialog(true);
-    };
+    }, [reset]);
+
+    // Handler para limpiar búsqueda
+    const clearSearch = useCallback(() => {
+        setSearchInput('');
+        setFilters(prev => ({ ...prev, search: '' }));
+        setCurrentPage(1);
+    }, []);
+
+    // SOLUCIÓN 4: useEffect optimizado para cargar datos
+    useEffect(() => {
+        console.log('🔄 useEffect triggered - filters:', filters, 'page:', currentPage);
+
+        const backendFilters = { ...filters };
+
+        // Mapeo de filtros
+        if (filters.incluir_eliminados === 'true') {
+            backendFilters.with_deleted = 'true';
+            delete backendFilters.incluir_eliminados;
+        } else if (filters.incluir_eliminados === 'only') {
+            backendFilters.with_deleted = 'true';
+            backendFilters.eliminados_only = 'true';
+            delete backendFilters.incluir_eliminados;
+        } else {
+            delete backendFilters.incluir_eliminados;
+        }
+
+        loadUsers({ page: currentPage, ...backendFilters });
+
+        // IMPORTANTE: Solo cargar roles una vez, no en cada búsqueda
+        if (currentPage === 1 && !filters.search && roles.length === 0) {
+            loadRoles({ page_size: 100 });
+        }
+    }, [currentPage, filters, loadUsers]); // Remover loadRoles de dependencies
+
+    // Cargar roles solo una vez al montar el componente
+    useEffect(() => {
+        loadRoles({ page_size: 100 });
+    }, [loadRoles]);
+
+    // SOLUCIÓN 5: Memoizar otros handlers para evitar re-renders
+    const handleFilterChange = useCallback((key, value) => {
+        console.log('🔧 Filter changed:', key, '=', value);
+        setFilters(prev => ({ ...prev, [key]: value }));
+        setCurrentPage(1);
+    }, []);
+
+    // SOLUCIÓN 6: Memoizar el renderizado de la tabla
+    const tableContent = useMemo(() => {
+        if (usersLoading) {
+            return (
+                <div className="flex justify-center py-8">
+                    <Progress size="sm" value={70} color="orange" className="w-32" />
+                </div>
+            );
+        }
+
+        if (users.length === 0) {
+            return (
+                <div className="text-center py-8">
+                    <Typography color="gray">
+                        {filters.search
+                            ? `No se encontraron usuarios que coincidan con "${filters.search}"`
+                            : filters.incluir_eliminados === 'only'
+                                ? 'No se encontraron usuarios eliminados'
+                                : 'No se encontraron usuarios'
+                        }
+                    </Typography>
+                </div>
+            );
+        }
+
+        return (
+            <table className="w-full min-w-max table-auto text-left">
+                <thead>
+                <tr>
+                    <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
+                        <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
+                            Usuario
+                        </Typography>
+                    </th>
+                    <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
+                        <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
+                            Rol
+                        </Typography>
+                    </th>
+                    <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
+                        <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
+                            Tipo
+                        </Typography>
+                    </th>
+                    <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
+                        <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
+                            Estado
+                        </Typography>
+                    </th>
+                    <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
+                        <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
+                            Último Login
+                        </Typography>
+                    </th>
+                    <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
+                        <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
+                            Acciones
+                        </Typography>
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                {users.map((user) => (
+                    <tr key={user.id} className={`hover:bg-gray-50 ${user.eliminado ? 'opacity-60' : ''}`}>
+                        <td className="p-4">
+                            <div className="flex flex-col">
+                                <div className="flex items-center gap-2">
+                                    <Typography variant="small" color="blue-gray" className="font-medium">
+                                        {user.nombre_completo}
+                                    </Typography>
+                                    {user.eliminado && (
+                                        <Chip
+                                            variant="ghost"
+                                            size="sm"
+                                            color="gray"
+                                            value="Eliminado"
+                                            icon={<IoTrash className="h-3 w-3" />}
+                                        />
+                                    )}
+                                </div>
+                                <Typography variant="small" color="gray" className="font-normal">
+                                    COTEL: {user.codigocotel}
+                                </Typography>
+                            </div>
+                        </td>
+                        <td className="p-4">
+                            <div className="flex items-center gap-2">
+                                <Chip
+                                    variant="ghost"
+                                    size="sm"
+                                    value={user.rol_nombre || 'Sin rol'}
+                                    color={user.rol_nombre ? 'blue' : 'gray'}
+                                />
+                                {user.rol_nombre && !user.eliminado && (
+                                    <Menu>
+                                        <MenuHandler>
+                                            <IconButton variant="text" size="sm">
+                                                <IoCreate className="h-3 w-3" />
+                                            </IconButton>
+                                        </MenuHandler>
+                                        <MenuList>
+                                            {roles.map((role) => (
+                                                <MenuItem
+                                                    key={role.id}
+                                                    onClick={() => handleChangeRole(user.id, role.id)}
+                                                    className={user.rol_nombre === role.nombre ? 'bg-blue-50' : ''}
+                                                >
+                                                    {role.nombre}
+                                                </MenuItem>
+                                            ))}
+                                        </MenuList>
+                                    </Menu>
+                                )}
+                            </div>
+                        </td>
+                        <td className="p-4">
+                            <Chip
+                                variant="ghost"
+                                size="sm"
+                                value={user.tipo_usuario === 'manual' ? 'Manual' : 'Migrado'}
+                                color={user.tipo_usuario === 'manual' ? 'green' : 'blue'}
+                            />
+                        </td>
+                        <td className="p-4">
+                            <div className="flex flex-col gap-1">
+                                <Chip
+                                    variant="ghost"
+                                    size="sm"
+                                    value={getUserStatusText(user)}
+                                    color={getUserStatusColor(user)}
+                                />
+                                {user.intentos_login_fallidos > 0 && (
+                                    <Typography variant="small" color="red" className="text-xs">
+                                        {user.intentos_login_fallidos} intentos fallidos
+                                    </Typography>
+                                )}
+                            </div>
+                        </td>
+                        <td className="p-4">
+                            <Typography variant="small" color="gray">
+                                {user.last_login
+                                    ? new Date(user.last_login).toLocaleDateString('es-ES')
+                                    : 'Nunca'
+                                }
+                            </Typography>
+                        </td>
+                        <td className="p-4">
+                            <div className="flex items-center gap-2">
+                                <Permission recurso="usuarios" accion="leer">
+                                    <Tooltip content="Ver detalles">
+                                        <IconButton variant="text" size="sm">
+                                            <IoEye className="h-4 w-4" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Permission>
+
+                                {!user.eliminado && (
+                                    <Permission recurso="usuarios" accion="actualizar">
+                                        <Tooltip content="Editar">
+                                            <IconButton
+                                                variant="text"
+                                                size="sm"
+                                                onClick={() => openEditDialog(user)}
+                                            >
+                                                <IoCreate className="h-4 w-4" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Permission>
+                                )}
+
+                                <Menu>
+                                    <MenuHandler>
+                                        <IconButton variant="text" size="sm">
+                                            <IoEllipsisVertical className="h-4 w-4" />
+                                        </IconButton>
+                                    </MenuHandler>
+                                    <MenuList>
+                                        {user.eliminado && (
+                                            <Permission recurso="usuarios" accion="actualizar">
+                                                <MenuItem
+                                                    className="flex items-center gap-2 text-green-500"
+                                                    onClick={() => openConfirmDialog('restore', user)}
+                                                >
+                                                    <IoReload className="h-4 w-4" />
+                                                    Restaurar
+                                                </MenuItem>
+                                            </Permission>
+                                        )}
+
+                                        {!user.eliminado && (
+                                            <>
+                                                <Permission recurso="usuarios" accion="actualizar">
+                                                    {user.is_active ? (
+                                                        <MenuItem
+                                                            className="flex items-center gap-2 text-red-500"
+                                                            onClick={() => openConfirmDialog('deactivate', user)}
+                                                        >
+                                                            <IoCloseCircle className="h-4 w-4" />
+                                                            Desactivar
+                                                        </MenuItem>
+                                                    ) : (
+                                                        <MenuItem
+                                                            className="flex items-center gap-2 text-green-500"
+                                                            onClick={() => openConfirmDialog('activate', user)}
+                                                        >
+                                                            <IoCheckmarkCircle className="h-4 w-4" />
+                                                            Activar
+                                                        </MenuItem>
+                                                    )}
+
+                                                    <MenuItem
+                                                        className="flex items-center gap-2"
+                                                        onClick={() => openConfirmDialog('resetPassword', user)}
+                                                    >
+                                                        <IoKey className="h-4 w-4" />
+                                                        Resetear Contraseña
+                                                    </MenuItem>
+
+                                                    {user.esta_bloqueado && (
+                                                        <MenuItem
+                                                            className="flex items-center gap-2 text-blue-500"
+                                                            onClick={() => openConfirmDialog('unlock', user)}
+                                                        >
+                                                            <IoLockOpen className="h-4 w-4" />
+                                                            Desbloquear
+                                                        </MenuItem>
+                                                    )}
+                                                </Permission>
+
+                                                <Permission recurso="usuarios" accion="eliminar">
+                                                    <MenuItem
+                                                        className="flex items-center gap-2 text-red-500"
+                                                        onClick={() => openConfirmDialog('delete', user)}
+                                                    >
+                                                        <IoTrash className="h-4 w-4" />
+                                                        Eliminar
+                                                    </MenuItem>
+                                                </Permission>
+                                            </>
+                                        )}
+                                    </MenuList>
+                                </Menu>
+                            </div>
+                        </td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+        );
+    }, [users, usersLoading, filters.search, filters.incluir_eliminados, roles, getUserStatusText, getUserStatusColor, handleChangeRole, openEditDialog, openConfirmDialog]);
+
+    if (usersLoading && users.length === 0) {
+        return <Loader message="Cargando usuarios..." />;
+    }
 
     return (
         <div className="space-y-6">
@@ -351,18 +618,26 @@ const Users = () => {
                 </Alert>
             )}
 
-            {/* Filters */}
+            {/* FILTROS OPTIMIZADOS */}
             <Card>
                 <CardBody className="p-4">
                     <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        {/* BÚSQUEDA OPTIMIZADA */}
                         <div className="md:col-span-2">
                             <Input
                                 label="Buscar usuarios"
                                 icon={<IoSearch />}
-                                value={filters.search}
-                                onChange={(e) => handleSearch(e.target.value)}
+                                value={searchInput} // ← Usar searchInput local
+                                onChange={(e) => handleSearchInputChange(e.target.value)} // ← Handler optimizado
                                 placeholder="Nombre, apellido o código COTEL"
+                                className={usersLoading ? "opacity-60" : ""}
                             />
+                            {/* NUEVO: Indicador de búsqueda */}
+                            {usersLoading && searchInput && (
+                                <Typography variant="small" color="blue" className="mt-1 text-xs">
+                                    Buscando "{searchInput}"...
+                                </Typography>
+                            )}
                         </div>
 
                         <Select
@@ -388,7 +663,6 @@ const Users = () => {
                             <Option value="migrado">Migrado</Option>
                         </Select>
 
-                        {/* MODIFICADO: Filtro de estado actualizado */}
                         <Select
                             label="Estado"
                             value={filters.is_active}
@@ -399,21 +673,20 @@ const Users = () => {
                             <Option value="false">Inactivos</Option>
                         </Select>
 
-                        {/* NUEVO: Filtro para incluir eliminados */}
                         <Select
                             label="Incluir eliminados"
                             value={filters.incluir_eliminados}
                             onChange={(value) => handleFilterChange('incluir_eliminados', value)}
                         >
-                            <Option value="">Solo activos</Option>
+                            <Option value="">Todos</Option>
                             <Option value="true">Incluir eliminados</Option>
                             <Option value="only">Solo eliminados</Option>
                         </Select>
                     </div>
 
                     {/* NUEVO: Mostrar información del filtro activo */}
-                    {filters.incluir_eliminados && (
-                        <div className="mt-3 flex items-center gap-2">
+                    {(filters.incluir_eliminados || filters.search) && (
+                        <div className="mt-3 flex items-center gap-2 flex-wrap">
                             {filters.incluir_eliminados === 'true' && (
                                 <Chip
                                     variant="ghost"
@@ -432,12 +705,21 @@ const Users = () => {
                                     icon={<IoTrash className="h-3 w-3" />}
                                 />
                             )}
+                            {filters.search && (
+                                <Chip
+                                    variant="ghost"
+                                    size="sm"
+                                    value={`Búsqueda: "${filters.search}"`}
+                                    color="blue"
+                                    onClose={clearSearch}
+                                />
+                            )}
                         </div>
                     )}
                 </CardBody>
             </Card>
 
-            {/* Users Table */}
+            {/* TABLA OPTIMIZADA */}
             <Card>
                 <CardHeader floated={false} shadow={false} className="rounded-none">
                     <div className="flex items-center justify-between">
@@ -446,8 +728,25 @@ const Users = () => {
                         </Typography>
 
                         <div className="flex items-center gap-2">
-                            <IconButton variant="text" onClick={() => loadUsers({ page: currentPage, ...filters })}>
-                                <IoRefresh className="h-4 w-4" />
+                            <IconButton
+                                variant="text"
+                                onClick={() => {
+                                    const backendFilters = { ...filters };
+                                    if (filters.incluir_eliminados === 'true') {
+                                        backendFilters.with_deleted = 'true';
+                                        delete backendFilters.incluir_eliminados;
+                                    } else if (filters.incluir_eliminados === 'only') {
+                                        backendFilters.with_deleted = 'true';
+                                        backendFilters.eliminados_only = 'true';
+                                        delete backendFilters.incluir_eliminados;
+                                    } else {
+                                        delete backendFilters.incluir_eliminados;
+                                    }
+                                    loadUsers({ page: currentPage, ...backendFilters });
+                                }}
+                                disabled={usersLoading}
+                            >
+                                <IoRefresh className={`h-4 w-4 ${usersLoading ? 'animate-spin' : ''}`} />
                             </IconButton>
 
                             <Permission recurso="usuarios" accion="leer">
@@ -460,248 +759,7 @@ const Users = () => {
                 </CardHeader>
 
                 <CardBody className="overflow-x-auto px-0">
-                    {usersLoading ? (
-                        <div className="flex justify-center py-8">
-                            <Progress size="sm" value={70} color="orange" className="w-32" />
-                        </div>
-                    ) : users.length === 0 ? (
-                        <div className="text-center py-8">
-                            <Typography color="gray">
-                                {filters.incluir_eliminados === 'only'
-                                    ? 'No se encontraron usuarios eliminados'
-                                    : 'No se encontraron usuarios'
-                                }
-                            </Typography>
-                        </div>
-                    ) : (
-                        <table className="w-full min-w-max table-auto text-left">
-                            <thead>
-                            <tr>
-                                <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                                    <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
-                                        Usuario
-                                    </Typography>
-                                </th>
-                                <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                                    <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
-                                        Rol
-                                    </Typography>
-                                </th>
-                                <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                                    <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
-                                        Tipo
-                                    </Typography>
-                                </th>
-                                <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                                    <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
-                                        Estado
-                                    </Typography>
-                                </th>
-                                <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                                    <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
-                                        Último Login
-                                    </Typography>
-                                </th>
-                                <th className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                                    <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
-                                        Acciones
-                                    </Typography>
-                                </th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {users.map((user) => (
-                                <tr key={user.id} className={`hover:bg-gray-50 ${user.eliminado ? 'opacity-60' : ''}`}>
-                                    <td className="p-4">
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-2">
-                                                <Typography variant="small" color="blue-gray" className="font-medium">
-                                                    {user.nombre_completo}
-                                                </Typography>
-                                                {/* NUEVO: Icono para usuarios eliminados */}
-                                                {user.eliminado && (
-                                                    <Chip
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        color="gray"
-                                                        value="Eliminado"
-                                                        icon={<IoTrash className="h-3 w-3" />}
-                                                    />
-                                                )}
-                                            </div>
-                                            <Typography variant="small" color="gray" className="font-normal">
-                                                COTEL: {user.codigocotel}
-                                            </Typography>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2">
-                                            <Chip
-                                                variant="ghost"
-                                                size="sm"
-                                                value={user.rol_nombre || 'Sin rol'}
-                                                color={user.rol_nombre ? 'blue' : 'gray'}
-                                            />
-                                            {/* Solo permitir cambio de rol si no está eliminado */}
-                                            {user.rol_nombre && !user.eliminado && (
-                                                <Menu>
-                                                    <MenuHandler>
-                                                        <IconButton variant="text" size="sm">
-                                                            <IoCreate className="h-3 w-3" />
-                                                        </IconButton>
-                                                    </MenuHandler>
-                                                    <MenuList>
-                                                        {roles.map((role) => (
-                                                            <MenuItem
-                                                                key={role.id}
-                                                                onClick={() => handleChangeRole(user.id, role.id)}
-                                                                className={user.rol_nombre === role.nombre ? 'bg-blue-50' : ''}
-                                                            >
-                                                                {role.nombre}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </MenuList>
-                                                </Menu>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <Chip
-                                            variant="ghost"
-                                            size="sm"
-                                            value={user.tipo_usuario === 'manual' ? 'Manual' : 'Migrado'}
-                                            color={user.tipo_usuario === 'manual' ? 'green' : 'blue'}
-                                        />
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex flex-col gap-1">
-                                            <Chip
-                                                variant="ghost"
-                                                size="sm"
-                                                value={getUserStatusText(user)}
-                                                color={getUserStatusColor(user)}
-                                            />
-                                            {user.intentos_login_fallidos > 0 && (
-                                                <Typography variant="small" color="red" className="text-xs">
-                                                    {user.intentos_login_fallidos} intentos fallidos
-                                                </Typography>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <Typography variant="small" color="gray">
-                                            {user.last_login
-                                                ? new Date(user.last_login).toLocaleDateString('es-ES')
-                                                : 'Nunca'
-                                            }
-                                        </Typography>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2">
-                                            <Permission recurso="usuarios" accion="leer">
-                                                <Tooltip content="Ver detalles">
-                                                    <IconButton variant="text" size="sm">
-                                                        <IoEye className="h-4 w-4" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Permission>
-
-                                            {/* Solo mostrar editar si no está eliminado */}
-                                            {!user.eliminado && (
-                                                <Permission recurso="usuarios" accion="actualizar">
-                                                    <Tooltip content="Editar">
-                                                        <IconButton
-                                                            variant="text"
-                                                            size="sm"
-                                                            onClick={() => openEditDialog(user)}
-                                                        >
-                                                            <IoCreate className="h-4 w-4" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Permission>
-                                            )}
-
-                                            <Menu>
-                                                <MenuHandler>
-                                                    <IconButton variant="text" size="sm">
-                                                        <IoEllipsisVertical className="h-4 w-4" />
-                                                    </IconButton>
-                                                </MenuHandler>
-                                                <MenuList>
-                                                    {/* NUEVO: Opción de restaurar para usuarios eliminados */}
-                                                    {user.eliminado && (
-                                                        <Permission recurso="usuarios" accion="actualizar">
-                                                            <MenuItem
-                                                                className="flex items-center gap-2 text-green-500"
-                                                                onClick={() => openConfirmDialog('restore', user)}
-                                                            >
-                                                                <IoReload className="h-4 w-4" />
-                                                                Restaurar
-                                                            </MenuItem>
-                                                        </Permission>
-                                                    )}
-
-                                                    {/* Acciones solo para usuarios no eliminados */}
-                                                    {!user.eliminado && (
-                                                        <>
-                                                            <Permission recurso="usuarios" accion="actualizar">
-                                                                {user.is_active ? (
-                                                                    <MenuItem
-                                                                        className="flex items-center gap-2 text-red-500"
-                                                                        onClick={() => openConfirmDialog('deactivate', user)}
-                                                                    >
-                                                                        <IoCloseCircle className="h-4 w-4" />
-                                                                        Desactivar
-                                                                    </MenuItem>
-                                                                ) : (
-                                                                    <MenuItem
-                                                                        className="flex items-center gap-2 text-green-500"
-                                                                        onClick={() => openConfirmDialog('activate', user)}
-                                                                    >
-                                                                        <IoCheckmarkCircle className="h-4 w-4" />
-                                                                        Activar
-                                                                    </MenuItem>
-                                                                )}
-
-                                                                <MenuItem
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() => openConfirmDialog('resetPassword', user)}
-                                                                >
-                                                                    <IoKey className="h-4 w-4" />
-                                                                    Resetear Contraseña
-                                                                </MenuItem>
-
-                                                                {user.esta_bloqueado && (
-                                                                    <MenuItem
-                                                                        className="flex items-center gap-2 text-blue-500"
-                                                                        onClick={() => openConfirmDialog('unlock', user)}
-                                                                    >
-                                                                        <IoLockOpen className="h-4 w-4" />
-                                                                        Desbloquear
-                                                                    </MenuItem>
-                                                                )}
-                                                            </Permission>
-
-                                                            <Permission recurso="usuarios" accion="eliminar">
-                                                                <MenuItem
-                                                                    className="flex items-center gap-2 text-red-500"
-                                                                    onClick={() => openConfirmDialog('delete', user)}
-                                                                >
-                                                                    <IoTrash className="h-4 w-4" />
-                                                                    Eliminar
-                                                                </MenuItem>
-                                                            </Permission>
-                                                        </>
-                                                    )}
-                                                </MenuList>
-                                            </Menu>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    )}
+                    {tableContent}
                 </CardBody>
             </Card>
 
