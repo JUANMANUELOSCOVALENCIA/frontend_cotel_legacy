@@ -13,11 +13,11 @@ import Layout from './core/layout/Layout';
 import Loader from './core/layout/Loader';
 
 // Páginas de gestión
-import Users from './core/permissions/pages/Users';
-import Roles from './core/permissions/pages/Roles';
-import Permissions from './core/permissions/pages/Permissions';
+import Users from './core/permissions/pages/users/index.jsx';
+import Roles from './core/permissions/pages/roles/index.jsx';
+import Permissions from './core/permissions/pages/permissions/index.jsx';
 import Profile from './core/auth/pages/Profile';
-import EmployeeMigration from "./core/permissions/pages/EmployeeMigration.jsx";
+import EmployeeMigration from "./core/permissions/pages/employeeMigration/index.jsx";
 
 function App() {
     const { isAuthenticated, loading, user } = useContext(AuthContext);
