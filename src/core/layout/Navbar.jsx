@@ -22,6 +22,9 @@ import {
     IoKey,
     IoChevronDown,
     IoPersonAdd,
+    IoStorefront,
+    IoCloudUpload,
+    IoArchive,
 } from 'react-icons/io5';
 import { useAuth, useUser, useLogout } from '../auth/hooks/useAuth';
 import Permission from '../permissions/components/Permission';
@@ -32,9 +35,11 @@ const Navbar = () => {
     const [isNavOpen, setIsNavOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isUsersMenuOpen, setIsUsersMenuOpen] = useState(false);
+    const [isAlmacenesMenuOpen, setIsAlmacenesMenuOpen] = useState(false);
 
     const profileMenuRef = useRef(null);
     const usersMenuRef = useRef(null);
+    const almacenesMenuRef = useRef(null);
 
     const { isAuthenticated, requiresPasswordChange } = useAuth();
     const { user, fullName } = useUser();
@@ -48,6 +53,9 @@ const Navbar = () => {
             }
             if (usersMenuRef.current && !usersMenuRef.current.contains(event.target)) {
                 setIsUsersMenuOpen(false);
+            }
+            if (almacenesMenuRef.current && !almacenesMenuRef.current.contains(event.target)) {
+                setIsAlmacenesMenuOpen(false);
             }
         };
 
@@ -108,6 +116,28 @@ const Navbar = () => {
             ]
         },
         {
+            label: 'Almacenes',
+            icon: IoStorefront,
+            permissions: [{ recurso: 'almacenes', accion: 'leer' }],
+            type: 'dropdown',
+            submenu: [
+                {
+                    label: 'Gestión de Almacenes',
+                    href: '/almacenes/gestion',
+                    icon: IoArchive,
+                    permissions: [{ recurso: 'almacenes', accion: 'leer' }],
+                    description: 'Administrar inventario y almacenes'
+                },
+                {
+                    label: 'Importar Equipos',
+                    href: '/almacenes/importacion',
+                    icon: IoCloudUpload,
+                    permissions: [{ recurso: 'almacenes', accion: 'leer' }],
+                    description: 'Importación masiva de equipos'
+                }
+            ]
+        },
+        {
             label: 'Auditoría',
             href: '/audit',
             icon: IoDocument,
@@ -146,17 +176,37 @@ const Navbar = () => {
         return false;
     };
 
+    // Función para manejar el dropdown de almacenes
+    const handleAlmacenesDropdown = (itemLabel) => {
+        if (itemLabel === 'Almacenes') {
+            return {
+                isOpen: isAlmacenesMenuOpen,
+                setIsOpen: setIsAlmacenesMenuOpen,
+                menuRef: almacenesMenuRef
+            };
+        } else if (itemLabel === 'Usuarios') {
+            return {
+                isOpen: isUsersMenuOpen,
+                setIsOpen: setIsUsersMenuOpen,
+                menuRef: usersMenuRef
+            };
+        }
+        return null;
+    };
+
     // Componente para elementos de navegación desktop
     const NavList = () => (
         <ul className="mt-2 mb-4 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center">
             {navItems.map((item) => {
                 if (item.type === 'dropdown') {
+                    const dropdownConfig = handleAlmacenesDropdown(item.label);
+
                     return (
                         <Permission key={item.label} permissions={item.permissions}>
-                            <li className="p-1 relative" ref={usersMenuRef}>
+                            <li className="p-1 relative" ref={dropdownConfig?.menuRef}>
                                 <Button
                                     variant="text"
-                                    onClick={() => setIsUsersMenuOpen(!isUsersMenuOpen)}
+                                    onClick={() => dropdownConfig?.setIsOpen(!dropdownConfig?.isOpen)}
                                     className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 font-medium normal-case ${
                                         isRouteActive(null, item.submenu)
                                             ? 'bg-orange-500 text-white shadow-md border border-orange-600'
@@ -167,18 +217,18 @@ const Navbar = () => {
                                     {item.label}
                                     <IoChevronDown
                                         className={`h-4 w-4 transition-transform ${
-                                            isUsersMenuOpen ? 'rotate-180' : ''
+                                            dropdownConfig?.isOpen ? 'rotate-180' : ''
                                         }`}
                                     />
                                 </Button>
 
-                                {isUsersMenuOpen && (
+                                {dropdownConfig?.isOpen && (
                                     <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[280px] max-w-[320px] p-2">
                                         {item.submenu.map((subItem) => (
                                             <Permission key={subItem.href} permissions={subItem.permissions}>
                                                 <button
                                                     onClick={() => {
-                                                        setIsUsersMenuOpen(false);
+                                                        dropdownConfig?.setIsOpen(false);
                                                         navigate(subItem.href);
                                                     }}
                                                     className={`w-full rounded-lg p-3 transition-all duration-200 text-left ${
