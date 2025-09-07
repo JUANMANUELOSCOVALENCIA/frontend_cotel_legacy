@@ -1,6 +1,6 @@
 // ======================================================
 // src/core/almacenes/pages/almacenes/index.jsx
-// Página principal de gestión de almacenes
+// Página principal de gestión de almacenes - CORREGIDA
 // ======================================================
 
 import React, { useState, useEffect } from 'react';
@@ -26,7 +26,7 @@ import {
     IoAdd,
     IoSearch,
     IoRefresh,
-    IoWarehouse,
+    IoStorefront,
     IoStatsChart,
     IoFilter,
     IoGrid,
@@ -42,12 +42,13 @@ import {
     EliminarAlmacenDialog,
     EstadisticasAlmacenDialog
 } from './almacenDialogs';
-import { useAlmacenActions, useAlmacenFilters } from '/hooks';
+import { useAlmacenActions } from './hooks/useAlmacenActions.js';
+import { useAlmacenFilters } from './hooks/useAlmacenFilters.js';
+import { useAlmacenUI } from './hooks/useAlmacenUI';
 import Loader from '../../../../core/layout/Loader';
 
 const AlmacenesPage = () => {
     const { isAuthenticated } = useAuthStatus();
-    const [vistaActual, setVistaActual] = useState('tabla'); // 'tabla', 'grid', 'resumen'
     const [filtrosAvanzados, setFiltrosAvanzados] = useState(false);
     const [busquedaTermino, setBusquedaTermino] = useState('');
 
@@ -76,24 +77,18 @@ const AlmacenesPage = () => {
         refrescar,
     } = useAlmacenes();
 
-    // Hooks personalizados
+    // Hook de UI state
     const {
         dialogos,
         abrirDialogo,
         cerrarDialogo,
-        handleCrear,
-        handleEditar,
-        handleEliminar,
-        handleVerEstadisticas
-    } = useAlmacenActions({
-        crearAlmacen,
-        actualizarAlmacen,
-        eliminarAlmacen,
-        obtenerAlmacen,
-        cargarEstadisticasAlmacen,
-        refrescar
-    });
+        vistaActual,
+        cambiarVista,
+        almacenSeleccionado,
+        setAlmacenSeleccionado
+    } = useAlmacenUI();
 
+    // Hook de filtros
     const {
         filtrosDisponibles,
         aplicarFiltroRapido,
@@ -105,25 +100,106 @@ const AlmacenesPage = () => {
         limpiarFiltros
     });
 
-    // Cargar resumen al montar
-    useEffect(() => {
-        cargarResumenAlmacenes();
-    }, []);
+    // =====================================
+    // FUNCIONES DE MANEJO DE ALMACENES
+    // =====================================
 
-    // Manejar búsqueda
+    // Función para crear almacén (para el dialog)
+    const handleCrearAlmacenSubmit = async (datos) => {
+        try {
+            await crearAlmacen(datos);
+            cerrarDialogo('crear');
+            await refrescar();
+        } catch (error) {
+            console.error('Error al crear almacén:', error);
+            throw error;
+        }
+    };
+
+    // Función para actualizar almacén (para el dialog)
+    const handleActualizarAlmacenSubmit = async (id, datos) => {
+        try {
+            await actualizarAlmacen(id, datos);
+            cerrarDialogo('editar');
+            await refrescar();
+        } catch (error) {
+            console.error('Error al actualizar almacén:', error);
+            throw error;
+        }
+    };
+
+    // Función para eliminar almacén (para el dialog)
+    const handleEliminarAlmacenSubmit = async (id) => {
+        try {
+            await eliminarAlmacen(id);
+            cerrarDialogo('eliminar');
+            await refrescar();
+        } catch (error) {
+            console.error('Error al eliminar almacén:', error);
+            throw error;
+        }
+    };
+
+    // Función para manejar creación de almacén (botón UI)
+    const handleCrearAlmacen = () => {
+        abrirDialogo('crear');
+    };
+
+    // Función para manejar edición de almacén (botón UI)
+    const handleEditarAlmacen = (almacen) => {
+        setAlmacenSeleccionado(almacen);
+        abrirDialogo('editar');
+    };
+
+    // Función para manejar eliminación de almacén (botón UI)
+    const handleEliminarAlmacen = (almacen) => {
+        setAlmacenSeleccionado(almacen);
+        abrirDialogo('eliminar');
+    };
+
+    // Función para manejar estadísticas de almacén (botón UI)
+    const handleEstadisticasAlmacen = async (almacen) => {
+        setAlmacenSeleccionado(almacen);
+        await cargarEstadisticasAlmacen(almacen.id);
+        abrirDialogo('estadisticas');
+    };
+
+    // =====================================
+    // EFECTOS Y MANEJO DE EVENTOS
+    // =====================================
+
+    // Cargar datos iniciales
+    useEffect(() => {
+        if (isAuthenticated) {
+            cargarResumenAlmacenes();
+            cargarAlmacenes();
+        }
+    }, [isAuthenticated]);
+
+    // Manejar búsqueda con debounce
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (busquedaTermino !== '') {
+                buscar(busquedaTermino);
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [busquedaTermino]);
+
     const handleBusqueda = (evento) => {
         const termino = evento.target.value;
         setBusquedaTermino(termino);
 
-        // Debounce la búsqueda
-        const timeoutId = setTimeout(() => {
-            buscar(termino);
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
+        if (termino === '') {
+            cargarAlmacenes();
+        }
     };
 
-    // Tabs para diferentes vistas
+    // =====================================
+    // CONFIGURACIÓN DE TABS
+    // =====================================
+
     const tabs = [
         {
             key: 'tabla',
@@ -145,9 +221,26 @@ const AlmacenesPage = () => {
         }
     ];
 
+    // =====================================
+    // VERIFICACIONES Y GUARDS
+    // =====================================
+
     if (!isAuthenticated) {
         return <Loader />;
     }
+
+    // Helper para verificar loading state
+    const checkLoading = (type) => {
+        if (typeof isLoading === 'function') {
+            return isLoading(type);
+        }
+        // Si isLoading no es función, usar el estado general
+        return loading || false;
+    };
+
+    // =====================================
+    // RENDER DEL COMPONENTE
+    // =====================================
 
     return (
         <div className="space-y-6">
@@ -155,7 +248,7 @@ const AlmacenesPage = () => {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <div className="p-3 bg-blue-50 rounded-lg">
-                        <IoWarehouse className="h-6 w-6 text-blue-600" />
+                        <IoStorefront className="h-6 w-6 text-blue-600" />
                     </div>
                     <div>
                         <Typography variant="h4" color="blue-gray" className="font-bold">
@@ -174,15 +267,15 @@ const AlmacenesPage = () => {
                         color="blue-gray"
                         className="flex items-center gap-2"
                         onClick={refrescar}
-                        disabled={isLoading()}
+                        disabled={checkLoading('almacenes')}
                     >
-                        <IoRefresh className={`h-4 w-4 ${isLoading() ? 'animate-spin' : ''}`} />
+                        <IoRefresh className={`h-4 w-4 ${checkLoading('almacenes') ? 'animate-spin' : ''}`} />
                         Actualizar
                     </Button>
                     <Button
                         size="sm"
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                        onClick={() => abrirDialogo('crear')}
+                        onClick={handleCrearAlmacen}
                     >
                         <IoAdd className="h-4 w-4" />
                         Nuevo Almacén
@@ -205,7 +298,7 @@ const AlmacenesPage = () => {
                                     </Typography>
                                 </div>
                                 <div className="p-2 bg-blue-50 rounded-lg">
-                                    <IoWarehouse className="h-6 w-6 text-blue-600" />
+                                    <IoStorefront className="h-6 w-6 text-blue-600" />
                                 </div>
                             </div>
                         </CardBody>
@@ -310,7 +403,7 @@ const AlmacenesPage = () => {
                                             <Tab
                                                 key={key}
                                                 value={value}
-                                                onClick={() => setVistaActual(value)}
+                                                onClick={() => cambiarVista(value)}
                                                 className="!py-2 !px-3"
                                             >
                                                 <div className="flex items-center gap-1">
@@ -329,7 +422,7 @@ const AlmacenesPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-lg">
                                 <Select
                                     label="Tipo"
-                                    value={filtros.tipo || ''}
+                                    value={filtros?.tipo || ''}
                                     onChange={(val) => aplicarFiltros({ tipo: val })}
                                 >
                                     <Option value="">Todos los tipos</Option>
@@ -341,7 +434,7 @@ const AlmacenesPage = () => {
 
                                 <Select
                                     label="Estado"
-                                    value={filtros.activo?.toString() || ''}
+                                    value={filtros?.activo?.toString() || ''}
                                     onChange={(val) => aplicarFiltros({ activo: val === 'true' })}
                                 >
                                     <Option value="">Todos</Option>
@@ -351,13 +444,13 @@ const AlmacenesPage = () => {
 
                                 <Input
                                     label="Ciudad"
-                                    value={filtros.ciudad || ''}
+                                    value={filtros?.ciudad || ''}
                                     onChange={(e) => aplicarFiltros({ ciudad: e.target.value })}
                                 />
 
                                 <Select
                                     label="Es Principal"
-                                    value={filtros.es_principal?.toString() || ''}
+                                    value={filtros?.es_principal?.toString() || ''}
                                     onChange={(val) => aplicarFiltros({ es_principal: val === 'true' })}
                                 >
                                     <Option value="">Todos</Option>
@@ -388,7 +481,7 @@ const AlmacenesPage = () => {
                         )}
 
                         {/* Filtros activos */}
-                        {getFiltrosActivos().length > 0 && (
+                        {getFiltrosActivos && getFiltrosActivos().length > 0 && (
                             <div className="flex flex-wrap gap-2">
                                 {getFiltrosActivos().map((filtro, index) => (
                                     <Chip
@@ -416,7 +509,7 @@ const AlmacenesPage = () => {
                             Lista de Almacenes
                         </Typography>
                         <Typography variant="small" color="gray">
-                            {paginacion.total > 0
+                            {paginacion && paginacion.total > 0
                                 ? `${((paginacion.page - 1) * paginacion.page_size) + 1}-${Math.min(paginacion.page * paginacion.page_size, paginacion.total)} de ${paginacion.total} almacenes`
                                 : 'Sin resultados'
                             }
@@ -426,30 +519,30 @@ const AlmacenesPage = () => {
 
                 <CardBody className="px-0">
                     {/* Vista de carga */}
-                    {isLoading('almacenes') && (
+                    {checkLoading('almacenes') && (
                         <div className="flex items-center justify-center py-12">
                             <Loader />
                         </div>
                     )}
 
                     {/* Sin datos */}
-                    {!isLoading('almacenes') && almacenes.length === 0 && (
+                    {!checkLoading('almacenes') && (!almacenes || almacenes.length === 0) && (
                         <div className="text-center py-12">
-                            <IoWarehouse className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                            <IoStorefront className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                             <Typography variant="h6" color="blue-gray" className="mb-2">
                                 No hay almacenes
                             </Typography>
                             <Typography color="gray" className="mb-4">
-                                {Object.keys(filtros).length > 0
+                                {filtros && Object.keys(filtros).length > 0
                                     ? 'No se encontraron almacenes con los filtros aplicados'
                                     : 'Comienza creando tu primer almacén'
                                 }
                             </Typography>
-                            {Object.keys(filtros).length === 0 && (
+                            {(!filtros || Object.keys(filtros).length === 0) && (
                                 <Button
                                     size="sm"
                                     className="bg-blue-600 hover:bg-blue-700"
-                                    onClick={() => abrirDialogo('crear')}
+                                    onClick={handleCrearAlmacen}
                                 >
                                     Crear Primer Almacén
                                 </Button>
@@ -458,7 +551,7 @@ const AlmacenesPage = () => {
                     )}
 
                     {/* Contenido según la vista */}
-                    {!isLoading('almacenes') && almacenes.length > 0 && (
+                    {!checkLoading('almacenes') && almacenes && almacenes.length > 0 && (
                         <Tabs value={vistaActual}>
                             <TabsBody>
                                 <TabPanel value="tabla" className="p-0">
@@ -466,10 +559,10 @@ const AlmacenesPage = () => {
                                         almacenes={almacenes}
                                         paginacion={paginacion}
                                         onChangePage={cambiarPagina}
-                                        onEdit={(almacen) => handleEditar(almacen)}
-                                        onDelete={(almacen) => handleEliminar(almacen)}
-                                        onViewStats={(almacen) => handleVerEstadisticas(almacen)}
-                                        loading={isLoading('almacenes')}
+                                        onEdit={handleEditarAlmacen}
+                                        onDelete={handleEliminarAlmacen}
+                                        onViewStats={handleEstadisticasAlmacen}
+                                        loading={checkLoading('almacenes')}
                                     />
                                 </TabPanel>
 
@@ -478,10 +571,10 @@ const AlmacenesPage = () => {
                                         almacenes={almacenes}
                                         paginacion={paginacion}
                                         onChangePage={cambiarPagina}
-                                        onEdit={(almacen) => handleEditar(almacen)}
-                                        onDelete={(almacen) => handleEliminar(almacen)}
-                                        onViewStats={(almacen) => handleVerEstadisticas(almacen)}
-                                        loading={isLoading('almacenes')}
+                                        onEdit={handleEditarAlmacen}
+                                        onDelete={handleEliminarAlmacen}
+                                        onViewStats={handleEstadisticasAlmacen}
+                                        loading={checkLoading('almacenes')}
                                     />
                                 </TabPanel>
 
@@ -498,7 +591,7 @@ const AlmacenesPage = () => {
                                                                 Distribución por Tipo
                                                             </Typography>
                                                             <div className="space-y-2">
-                                                                {Object.entries(resumen.por_tipo || {}).map(([tipo, cantidad]) => (
+                                                                {resumen.por_tipo && Object.entries(resumen.por_tipo).map(([tipo, cantidad]) => (
                                                                     <div key={tipo} className="flex justify-between">
                                                                         <Typography variant="small" color="gray">
                                                                             {tipo}:
@@ -518,7 +611,7 @@ const AlmacenesPage = () => {
                                                                 Distribución por Ciudad
                                                             </Typography>
                                                             <div className="space-y-2">
-                                                                {Object.entries(resumen.por_ciudad || {}).slice(0, 5).map(([ciudad, cantidad]) => (
+                                                                {resumen.por_ciudad && Object.entries(resumen.por_ciudad).slice(0, 5).map(([ciudad, cantidad]) => (
                                                                     <div key={ciudad} className="flex justify-between">
                                                                         <Typography variant="small" color="gray">
                                                                             {ciudad}:
@@ -573,9 +666,9 @@ const AlmacenesPage = () => {
                                                         <AlmacenCard
                                                             key={almacen.id}
                                                             almacen={almacen}
-                                                            onEdit={() => handleEditar(almacen)}
-                                                            onDelete={() => handleEliminar(almacen)}
-                                                            onViewStats={() => handleVerEstadisticas(almacen)}
+                                                            onEdit={() => handleEditarAlmacen(almacen)}
+                                                            onDelete={() => handleEliminarAlmacen(almacen)}
+                                                            onViewStats={() => handleEstadisticasAlmacen(almacen)}
                                                         />
                                                     ))}
                                                 </div>
@@ -591,34 +684,34 @@ const AlmacenesPage = () => {
 
             {/* Dialogs */}
             <CrearAlmacenDialog
-                open={uiState.dialogos.crear}
-                onClose={() => uiState.cerrarDialogo('crear')}
-                onSubmit={actions.handleCrearAlmacen}
-                loading={isLoading('create')}
+                open={dialogos?.crear || false}
+                onClose={() => cerrarDialogo('crear')}
+                onSubmit={handleCrearAlmacenSubmit}
+                loading={checkLoading('create')}
             />
 
             <EditarAlmacenDialog
-                open={uiState.dialogos.editar}
-                almacen={uiState.almacenSeleccionado}
-                onClose={() => uiState.cerrarDialogo('editar')}
-                onSubmit={actions.handleActualizarAlmacen}
-                loading={isLoading('update')}
+                open={dialogos?.editar || false}
+                almacen={almacenSeleccionado}
+                onClose={() => cerrarDialogo('editar')}
+                onSubmit={handleActualizarAlmacenSubmit}
+                loading={checkLoading('update')}
             />
 
             <EliminarAlmacenDialog
-                open={uiState.dialogos.eliminar}
-                almacen={uiState.almacenSeleccionado}
-                onClose={() => uiState.cerrarDialogo('eliminar')}
-                onConfirm={actions.handleEliminarAlmacen}
-                loading={isLoading('delete')}
+                open={dialogos?.eliminar || false}
+                almacen={almacenSeleccionado}
+                onClose={() => cerrarDialogo('eliminar')}
+                onConfirm={handleEliminarAlmacenSubmit}
+                loading={checkLoading('delete')}
             />
 
             <EstadisticasAlmacenDialog
-                open={uiState.dialogos.estadisticas}
-                almacen={uiState.almacenSeleccionado}
+                open={dialogos?.estadisticas || false}
+                almacen={almacenSeleccionado}
                 estadisticas={estadisticas}
-                onClose={() => uiState.cerrarDialogo('estadisticas')}
-                loading={isLoading('estadisticas')}
+                onClose={() => cerrarDialogo('estadisticas')}
+                loading={checkLoading('estadisticas')}
             />
         </div>
     );

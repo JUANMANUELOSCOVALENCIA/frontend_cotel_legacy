@@ -19,6 +19,7 @@ import Permissions from './core/permissions/pages/permissions/index.jsx';
 import Profile from './core/auth/pages/Profile';
 import EmployeeMigration from "./core/permissions/pages/employeeMigration/index.jsx";
 import ImportacionMasivaPage from "./features/almacenes/pages/inportacion/ImportacionMasivaPage.jsx";
+import AlmacenPage from "./features/almacenes/pages/almacenes/index.jsx";
 
 function App() {
     const { isAuthenticated, loading, user } = useContext(AuthContext);
@@ -84,6 +85,7 @@ function App() {
                     <Route path="usuarios/permisos" element={<Permissions />} />
                     <Route path="usuarios/migracion" element={<EmployeeMigration />} />
                     <Route path="almacenes/importacion" element={<ImportacionMasivaPage />} />
+                    <Route path="almacenes/almacen" element={<AlmacenPage />} />
                 </Route>
 
                 {/* Catch all */}

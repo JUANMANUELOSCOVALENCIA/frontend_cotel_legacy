@@ -20,7 +20,7 @@ import {
     IoTrash,
     IoStatsChart,
     IoLocation,
-    IoWarehouse,
+    IoStorefront ,
     IoCheckmarkCircle,
     IoCloseCircle,
     IoNavigate,
@@ -356,7 +356,7 @@ export const AlmacenCard = ({
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : 'bg-blue-100 text-blue-700'
                         }`}>
-                            <IoWarehouse className="h-5 w-5" />
+                            <IoStorefront  className="h-5 w-5" />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
@@ -562,7 +562,7 @@ export const EstadisticasDashboard = ({ estadisticas, loading = false }) => {
         {
             label: 'Materiales Totales',
             valor: estadisticas.total_materiales,
-            icon: IoWarehouse,
+            icon: IoStorefront ,
             color: 'blue',
             formato: 'numero'
         },

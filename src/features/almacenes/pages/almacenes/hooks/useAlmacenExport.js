@@ -618,7 +618,8 @@ export const useAlmacenExport = ({ almacenes = [], filtros = {} }) => {
 
         // Utilidades
         generarNombreArchivo,
-        procesarDatosParaExporte
+        procesarDatosParaExporte,
+        exportarCSV
     };
 };
 

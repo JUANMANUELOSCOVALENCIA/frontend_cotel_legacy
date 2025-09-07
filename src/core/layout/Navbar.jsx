@@ -134,6 +134,13 @@ const Navbar = () => {
                     icon: IoCloudUpload,
                     permissions: [{ recurso: 'almacenes', accion: 'leer' }],
                     description: 'Importación masiva de equipos'
+                },
+                {
+                    label: 'Almacen',
+                    href: '/almacenes/almacen',
+                    icon: IoCloudUpload,
+                    permissions: [{ recurso: 'almacenes', accion: 'leer' }],
+                    description: 'Importación masiva de equipos'
                 }
             ]
         },

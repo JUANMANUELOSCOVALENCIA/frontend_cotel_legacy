@@ -278,20 +278,6 @@ export const useAlmacenFilters = ({
     }, [cargarHistorial]);
 
     return {
-        // Estado de dialogs
-        dialogos,
-        almacenSeleccionado,
-        abrirDialogo,
-        cerrarDialogo,
-        cerrarTodosDialogos,
-        setAlmacenSeleccionado,
-
-        // Estado de vistas
-        vistaActual,
-        filtrosAvanzados,
-        cambiarVista,
-        toggleFiltrosAvanzados,
-
         // Búsqueda avanzada
         busquedaAvanzada,
         setBusquedaAvanzada,
@@ -315,8 +301,8 @@ export const useAlmacenFilters = ({
         filtrosDisponibles,
 
         // Utilidades
-        ejecutarAccionConFeedback
+        cargarHistorial
     };
 };
 
-export default useAlmacenUI;
+export default useAlmacenFilters;

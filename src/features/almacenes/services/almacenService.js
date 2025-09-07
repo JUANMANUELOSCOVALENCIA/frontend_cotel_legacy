@@ -4,19 +4,7 @@
 // ======================================================
 
 import api from '../../../services/api';
-import {
-    ALMACEN_ENDPOINTS,
-    LOTE_ENDPOINTS,
-    MATERIAL_ENDPOINTS,
-    TRASPASO_ENDPOINTS,
-    DEVOLUCION_ENDPOINTS,
-    LABORATORIO_ENDPOINTS,
-    IMPORTACION_ENDPOINTS,
-    REPORTE_ENDPOINTS,
-    MODELO_ENDPOINTS,
-    LEGACY_ENDPOINTS,
-    buildQuery
-} from '../../../services/endpoints';
+import ENDPOINTS, { buildQuery } from '../../../services/endpoints';
 
 class AlmacenService {
 
@@ -25,7 +13,7 @@ class AlmacenService {
     async getAlmacenes(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${ALMACEN_ENDPOINTS.ALMACENES}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.ALMACENES}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -40,7 +28,7 @@ class AlmacenService {
 
     async getAlmacenById(id) {
         try {
-            const response = await api.get(ALMACEN_ENDPOINTS.ALMACEN_DETAIL(id));
+            const response = await api.get(ENDPOINTS.ALMACEN_DETAIL(id));
             return {
                 success: true,
                 data: response.data
@@ -55,7 +43,7 @@ class AlmacenService {
 
     async createAlmacen(almacenData) {
         try {
-            const response = await api.post(ALMACEN_ENDPOINTS.ALMACENES, almacenData);
+            const response = await api.post(ENDPOINTS.ALMACENES, almacenData);
             return {
                 success: true,
                 data: response.data
@@ -70,7 +58,7 @@ class AlmacenService {
 
     async updateAlmacen(id, almacenData) {
         try {
-            const response = await api.patch(ALMACEN_ENDPOINTS.ALMACEN_DETAIL(id), almacenData);
+            const response = await api.patch(ENDPOINTS.ALMACEN_DETAIL(id), almacenData);
             return {
                 success: true,
                 data: response.data
@@ -85,7 +73,7 @@ class AlmacenService {
 
     async deleteAlmacen(id) {
         try {
-            const response = await api.delete(ALMACEN_ENDPOINTS.ALMACEN_DETAIL(id));
+            const response = await api.delete(ENDPOINTS.ALMACEN_DETAIL(id));
             return {
                 success: true,
                 message: response.data.message || 'Almacén eliminado correctamente'
@@ -101,7 +89,7 @@ class AlmacenService {
     async getAlmacenMateriales(id, params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${ALMACEN_ENDPOINTS.ALMACEN_MATERIALES(id)}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.ALMACEN_MATERIALES(id)}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -116,7 +104,7 @@ class AlmacenService {
 
     async getAlmacenEstadisticas(id) {
         try {
-            const response = await api.get(ALMACEN_ENDPOINTS.ALMACEN_ESTADISTICAS(id));
+            const response = await api.get(ENDPOINTS.ALMACEN_ESTADISTICAS(id));
             return {
                 success: true,
                 data: response.data
@@ -131,7 +119,7 @@ class AlmacenService {
 
     async getAlmacenPrincipal() {
         try {
-            const response = await api.get(ALMACEN_ENDPOINTS.ALMACEN_PRINCIPAL);
+            const response = await api.get(ENDPOINTS.ALMACEN_PRINCIPAL);
             return {
                 success: true,
                 data: response.data
@@ -146,7 +134,7 @@ class AlmacenService {
 
     async getResumenAlmacenes() {
         try {
-            const response = await api.get(ALMACEN_ENDPOINTS.RESUMEN_ALMACENES);
+            const response = await api.get(ENDPOINTS.RESUMEN_ALMACENES);
             return {
                 success: true,
                 data: response.data
@@ -164,7 +152,7 @@ class AlmacenService {
     async getProveedores(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${ALMACEN_ENDPOINTS.PROVEEDORES}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.PROVEEDORES}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -179,7 +167,7 @@ class AlmacenService {
 
     async createProveedor(proveedorData) {
         try {
-            const response = await api.post(ALMACEN_ENDPOINTS.PROVEEDORES, proveedorData);
+            const response = await api.post(ENDPOINTS.PROVEEDORES, proveedorData);
             return {
                 success: true,
                 data: response.data
@@ -194,7 +182,7 @@ class AlmacenService {
 
     async updateProveedor(id, proveedorData) {
         try {
-            const response = await api.patch(ALMACEN_ENDPOINTS.PROVEEDOR_DETAIL(id), proveedorData);
+            const response = await api.patch(ENDPOINTS.PROVEEDOR_DETAIL(id), proveedorData);
             return {
                 success: true,
                 data: response.data
@@ -210,7 +198,7 @@ class AlmacenService {
     async getProveedorLotes(id, params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${ALMACEN_ENDPOINTS.PROVEEDOR_LOTES(id)}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.PROVEEDOR_LOTES(id)}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -225,7 +213,7 @@ class AlmacenService {
 
     async getProveedoresActivos() {
         try {
-            const response = await api.get(ALMACEN_ENDPOINTS.PROVEEDORES_ACTIVOS);
+            const response = await api.get(ENDPOINTS.PROVEEDORES_ACTIVOS);
             return {
                 success: true,
                 data: response.data
@@ -243,7 +231,7 @@ class AlmacenService {
     async getLotes(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${LOTE_ENDPOINTS.LOTES}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.LOTES}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -258,7 +246,7 @@ class AlmacenService {
 
     async createLote(loteData) {
         try {
-            const response = await api.post(LOTE_ENDPOINTS.LOTES, loteData);
+            const response = await api.post(ENDPOINTS.LOTES, loteData);
             return {
                 success: true,
                 data: response.data
@@ -273,7 +261,7 @@ class AlmacenService {
 
     async getLoteById(id) {
         try {
-            const response = await api.get(LOTE_ENDPOINTS.LOTE_DETAIL(id));
+            const response = await api.get(ENDPOINTS.LOTE_DETAIL(id));
             return {
                 success: true,
                 data: response.data
@@ -288,7 +276,7 @@ class AlmacenService {
 
     async getLoteResumen(id) {
         try {
-            const response = await api.get(LOTE_ENDPOINTS.LOTE_RESUMEN(id));
+            const response = await api.get(ENDPOINTS.LOTE_RESUMEN(id));
             return {
                 success: true,
                 data: response.data
@@ -303,7 +291,7 @@ class AlmacenService {
 
     async cerrarLote(id) {
         try {
-            const response = await api.post(LOTE_ENDPOINTS.LOTE_CERRAR(id));
+            const response = await api.post(ENDPOINTS.LOTE_CERRAR(id));
             return {
                 success: true,
                 message: response.data.message || 'Lote cerrado correctamente'
@@ -318,7 +306,7 @@ class AlmacenService {
 
     async reabrirLote(id) {
         try {
-            const response = await api.post(LOTE_ENDPOINTS.LOTE_REABRIR(id));
+            const response = await api.post(ENDPOINTS.LOTE_REABRIR(id));
             return {
                 success: true,
                 message: response.data.message || 'Lote reabierto correctamente'
@@ -333,7 +321,7 @@ class AlmacenService {
 
     async enviarLoteALaboratorio(id) {
         try {
-            const response = await api.post(LOTE_ENDPOINTS.LOTE_ENVIAR_LABORATORIO(id));
+            const response = await api.post(ENDPOINTS.LOTE_ENVIAR_LABORATORIO(id));
             return {
                 success: true,
                 data: response.data
@@ -348,7 +336,7 @@ class AlmacenService {
 
     async agregarEntregaParcial(loteId, entregaData) {
         try {
-            const response = await api.post(LOTE_ENDPOINTS.LOTE_AGREGAR_ENTREGA(loteId), entregaData);
+            const response = await api.post(ENDPOINTS.LOTE_AGREGAR_ENTREGA(loteId), entregaData);
             return {
                 success: true,
                 data: response.data
@@ -366,7 +354,7 @@ class AlmacenService {
     async getMateriales(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${MATERIAL_ENDPOINTS.MATERIALES}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.MATERIALES}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -381,7 +369,7 @@ class AlmacenService {
 
     async createMaterial(materialData) {
         try {
-            const response = await api.post(MATERIAL_ENDPOINTS.MATERIALES, materialData);
+            const response = await api.post(ENDPOINTS.MATERIALES, materialData);
             return {
                 success: true,
                 data: response.data
@@ -396,7 +384,7 @@ class AlmacenService {
 
     async getMaterialById(id) {
         try {
-            const response = await api.get(MATERIAL_ENDPOINTS.MATERIAL_DETAIL(id));
+            const response = await api.get(ENDPOINTS.MATERIAL_DETAIL(id));
             return {
                 success: true,
                 data: response.data
@@ -411,7 +399,7 @@ class AlmacenService {
 
     async updateMaterial(id, materialData) {
         try {
-            const response = await api.patch(MATERIAL_ENDPOINTS.MATERIAL_DETAIL(id), materialData);
+            const response = await api.patch(ENDPOINTS.MATERIAL_DETAIL(id), materialData);
             return {
                 success: true,
                 data: response.data
@@ -426,7 +414,7 @@ class AlmacenService {
 
     async getMaterialHistorial(id) {
         try {
-            const response = await api.get(MATERIAL_ENDPOINTS.MATERIAL_HISTORIAL(id));
+            const response = await api.get(ENDPOINTS.MATERIAL_HISTORIAL(id));
             return {
                 success: true,
                 data: response.data
@@ -441,7 +429,7 @@ class AlmacenService {
 
     async cambiarEstadoMaterial(id, estadoData) {
         try {
-            const response = await api.post(MATERIAL_ENDPOINTS.MATERIAL_CAMBIAR_ESTADO(id), estadoData);
+            const response = await api.post(ENDPOINTS.MATERIAL_CAMBIAR_ESTADO(id), estadoData);
             return {
                 success: true,
                 data: response.data
@@ -456,7 +444,7 @@ class AlmacenService {
 
     async enviarMaterialALaboratorio(id, observaciones = '') {
         try {
-            const response = await api.post(MATERIAL_ENDPOINTS.MATERIAL_ENVIAR_LABORATORIO(id), {
+            const response = await api.post(ENDPOINTS.MATERIAL_ENVIAR_LABORATORIO(id), {
                 observaciones
             });
             return {
@@ -473,7 +461,7 @@ class AlmacenService {
 
     async retornarMaterialDeLaboratorio(id, laboratorioData) {
         try {
-            const response = await api.post(MATERIAL_ENDPOINTS.MATERIAL_RETORNAR_LABORATORIO(id), laboratorioData);
+            const response = await api.post(ENDPOINTS.MATERIAL_RETORNAR_LABORATORIO(id), laboratorioData);
             return {
                 success: true,
                 data: response.data
@@ -488,7 +476,7 @@ class AlmacenService {
 
     async busquedaAvanzadaMateriales(criterios) {
         try {
-            const response = await api.post(MATERIAL_ENDPOINTS.MATERIAL_BUSQUEDA_AVANZADA, criterios);
+            const response = await api.post(ENDPOINTS.MATERIAL_BUSQUEDA_AVANZADA, criterios);
             return {
                 success: true,
                 data: response.data
@@ -504,7 +492,7 @@ class AlmacenService {
     async validarUnicidadMaterial(params) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${MATERIAL_ENDPOINTS.MATERIAL_VALIDAR_UNICIDAD}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.MATERIAL_VALIDAR_UNICIDAD}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -520,7 +508,7 @@ class AlmacenService {
     async getMaterialesDisponibles(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${MATERIAL_ENDPOINTS.MATERIALES_DISPONIBLES_ASIGNACION}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.MATERIALES_DISPONIBLES_ASIGNACION}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -535,7 +523,7 @@ class AlmacenService {
 
     async operacionMasivaMateriales(operacionData) {
         try {
-            const response = await api.post(MATERIAL_ENDPOINTS.MATERIAL_OPERACION_MASIVA, operacionData);
+            const response = await api.post(ENDPOINTS.MATERIAL_OPERACION_MASIVA, operacionData);
             return {
                 success: true,
                 data: response.data
@@ -553,7 +541,7 @@ class AlmacenService {
     async getTraspasos(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${TRASPASO_ENDPOINTS.TRASPASOS}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.TRASPASOS}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -568,7 +556,7 @@ class AlmacenService {
 
     async createTraspaso(traspasoData) {
         try {
-            const response = await api.post(TRASPASO_ENDPOINTS.TRASPASOS, traspasoData);
+            const response = await api.post(ENDPOINTS.TRASPASOS, traspasoData);
             return {
                 success: true,
                 data: response.data
@@ -583,7 +571,7 @@ class AlmacenService {
 
     async getTraspasoById(id) {
         try {
-            const response = await api.get(TRASPASO_ENDPOINTS.TRASPASO_DETAIL(id));
+            const response = await api.get(ENDPOINTS.TRASPASO_DETAIL(id));
             return {
                 success: true,
                 data: response.data
@@ -598,7 +586,7 @@ class AlmacenService {
 
     async enviarTraspaso(id, datosEnvio = {}) {
         try {
-            const response = await api.post(TRASPASO_ENDPOINTS.TRASPASO_ENVIAR(id), datosEnvio);
+            const response = await api.post(ENDPOINTS.TRASPASO_ENVIAR(id), datosEnvio);
             return {
                 success: true,
                 data: response.data
@@ -613,7 +601,7 @@ class AlmacenService {
 
     async recibirTraspaso(id, datosRecepcion) {
         try {
-            const response = await api.post(TRASPASO_ENDPOINTS.TRASPASO_RECIBIR(id), datosRecepcion);
+            const response = await api.post(ENDPOINTS.TRASPASO_RECIBIR(id), datosRecepcion);
             return {
                 success: true,
                 data: response.data
@@ -628,7 +616,7 @@ class AlmacenService {
 
     async cancelarTraspaso(id, motivo = '') {
         try {
-            const response = await api.post(TRASPASO_ENDPOINTS.TRASPASO_CANCELAR(id), { motivo });
+            const response = await api.post(ENDPOINTS.TRASPASO_CANCELAR(id), { motivo });
             return {
                 success: true,
                 message: response.data.message || 'Traspaso cancelado correctamente'
@@ -643,7 +631,7 @@ class AlmacenService {
 
     async getTraspasoMateriales(id) {
         try {
-            const response = await api.get(TRASPASO_ENDPOINTS.TRASPASO_MATERIALES(id));
+            const response = await api.get(ENDPOINTS.TRASPASO_MATERIALES(id));
             return {
                 success: true,
                 data: response.data
@@ -661,7 +649,7 @@ class AlmacenService {
     async getDevoluciones(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${DEVOLUCION_ENDPOINTS.DEVOLUCIONES}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.DEVOLUCIONES}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -676,7 +664,7 @@ class AlmacenService {
 
     async createDevolucion(devolucionData) {
         try {
-            const response = await api.post(DEVOLUCION_ENDPOINTS.DEVOLUCIONES, devolucionData);
+            const response = await api.post(ENDPOINTS.DEVOLUCIONES, devolucionData);
             return {
                 success: true,
                 data: response.data
@@ -691,7 +679,7 @@ class AlmacenService {
 
     async enviarDevolucionAProveedor(id) {
         try {
-            const response = await api.post(DEVOLUCION_ENDPOINTS.DEVOLUCION_ENVIAR(id));
+            const response = await api.post(ENDPOINTS.DEVOLUCION_ENVIAR(id));
             return {
                 success: true,
                 message: response.data.message || 'Devolución enviada al proveedor'
@@ -706,7 +694,7 @@ class AlmacenService {
 
     async confirmarRespuestaProveedor(id, respuestaData) {
         try {
-            const response = await api.post(DEVOLUCION_ENDPOINTS.DEVOLUCION_CONFIRMAR(id), respuestaData);
+            const response = await api.post(ENDPOINTS.DEVOLUCION_CONFIRMAR(id), respuestaData);
             return {
                 success: true,
                 message: response.data.message || 'Respuesta del proveedor confirmada'
@@ -723,7 +711,7 @@ class AlmacenService {
 
     async getDashboardLaboratorio() {
         try {
-            const response = await api.get(LABORATORIO_ENDPOINTS.LABORATORIO);
+            const response = await api.get(ENDPOINTS.LABORATORIO);
             return {
                 success: true,
                 data: response.data
@@ -738,7 +726,7 @@ class AlmacenService {
 
     async operacionLaboratorio(operacionData) {
         try {
-            const response = await api.post(LABORATORIO_ENDPOINTS.LABORATORIO, operacionData);
+            const response = await api.post(ENDPOINTS.LABORATORIO, operacionData);
             return {
                 success: true,
                 data: response.data
@@ -753,7 +741,7 @@ class AlmacenService {
 
     async operacionMasivaLaboratorio(operacionData) {
         try {
-            const response = await api.post(LABORATORIO_ENDPOINTS.LABORATORIO_MASIVO, operacionData);
+            const response = await api.post(ENDPOINTS.LABORATORIO_MASIVO, operacionData);
             return {
                 success: true,
                 data: response.data
@@ -769,7 +757,7 @@ class AlmacenService {
     async getConsultasLaboratorio(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${LABORATORIO_ENDPOINTS.LABORATORIO_CONSULTAS}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.LABORATORIO_CONSULTAS}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -786,7 +774,7 @@ class AlmacenService {
 
     async getPlantillaImportacion() {
         try {
-            const response = await api.get(IMPORTACION_ENDPOINTS.IMPORTACION_MASIVA);
+            const response = await api.get(ENDPOINTS.IMPORTACION_MASIVA);
             return {
                 success: true,
                 data: response.data
@@ -801,7 +789,7 @@ class AlmacenService {
 
     async procesarImportacionMasiva(formData) {
         try {
-            const response = await api.post(IMPORTACION_ENDPOINTS.IMPORTACION_MASIVA, formData, {
+            const response = await api.post(ENDPOINTS.IMPORTACION_MASIVA, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -822,7 +810,7 @@ class AlmacenService {
 
     async getEstadisticasGenerales() {
         try {
-            const response = await api.get(REPORTE_ENDPOINTS.ESTADISTICAS_GENERALES);
+            const response = await api.get(ENDPOINTS.ESTADISTICAS_GENERALES);
             return {
                 success: true,
                 data: response.data
@@ -837,7 +825,7 @@ class AlmacenService {
 
     async getDashboardOperativo() {
         try {
-            const response = await api.get(REPORTE_ENDPOINTS.DASHBOARD);
+            const response = await api.get(ENDPOINTS.DASHBOARD);
             return {
                 success: true,
                 data: response.data
@@ -853,7 +841,7 @@ class AlmacenService {
     async getReporteInventario(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${REPORTE_ENDPOINTS.REPORTE_INVENTARIO}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.REPORTE_INVENTARIO}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -869,7 +857,7 @@ class AlmacenService {
     async getReporteMovimientos(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${REPORTE_ENDPOINTS.REPORTE_MOVIMIENTOS}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.REPORTE_MOVIMIENTOS}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -885,7 +873,7 @@ class AlmacenService {
     async getReporteGarantias(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${REPORTE_ENDPOINTS.REPORTE_GARANTIAS}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.REPORTE_GARANTIAS}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -901,7 +889,7 @@ class AlmacenService {
     async getReporteEficiencia(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${REPORTE_ENDPOINTS.REPORTE_EFICIENCIA}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.REPORTE_EFICIENCIA}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -919,7 +907,7 @@ class AlmacenService {
     async getMarcas(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${MODELO_ENDPOINTS.MARCAS}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.MARCAS}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -934,7 +922,7 @@ class AlmacenService {
 
     async createMarca(marcaData) {
         try {
-            const response = await api.post(MODELO_ENDPOINTS.MARCAS, marcaData);
+            const response = await api.post(ENDPOINTS.MARCAS, marcaData);
             return {
                 success: true,
                 data: response.data
@@ -950,7 +938,7 @@ class AlmacenService {
     async getTiposEquipo(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${MODELO_ENDPOINTS.TIPOS_EQUIPO}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.TIPOS_EQUIPO}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -966,7 +954,7 @@ class AlmacenService {
     async getModelos(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${MODELO_ENDPOINTS.MODELOS}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.MODELOS}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -981,7 +969,7 @@ class AlmacenService {
 
     async createModelo(modeloData) {
         try {
-            const response = await api.post(MODELO_ENDPOINTS.MODELOS, modeloData);
+            const response = await api.post(ENDPOINTS.MODELOS, modeloData);
             return {
                 success: true,
                 data: response.data
@@ -997,7 +985,7 @@ class AlmacenService {
     async getComponentes(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${MODELO_ENDPOINTS.COMPONENTES}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.COMPONENTES}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -1015,16 +1003,16 @@ class AlmacenService {
             let endpoint;
             switch (tipo) {
                 case 'marca':
-                    endpoint = MODELO_ENDPOINTS.MARCA_TOGGLE_ACTIVO(id);
+                    endpoint = ENDPOINTS.MARCA_TOGGLE_ACTIVO(id);
                     break;
                 case 'tipo_equipo':
-                    endpoint = MODELO_ENDPOINTS.TIPO_EQUIPO_TOGGLE_ACTIVO(id);
+                    endpoint = ENDPOINTS.TIPO_EQUIPO_TOGGLE_ACTIVO(id);
                     break;
                 case 'modelo':
-                    endpoint = MODELO_ENDPOINTS.MODELO_TOGGLE_ACTIVO(id);
+                    endpoint = ENDPOINTS.MODELO_TOGGLE_ACTIVO(id);
                     break;
                 case 'componente':
-                    endpoint = MODELO_ENDPOINTS.COMPONENTE_TOGGLE_ACTIVO(id);
+                    endpoint = ENDPOINTS.COMPONENTE_TOGGLE_ACTIVO(id);
                     break;
                 default:
                     throw new Error('Tipo de modelo no válido');
@@ -1048,7 +1036,7 @@ class AlmacenService {
     async getEquiposONU(params = {}) {
         try {
             const queryString = buildQuery(params);
-            const response = await api.get(`${LEGACY_ENDPOINTS.EQUIPOS_ONU}${queryString}`);
+            const response = await api.get(`${ENDPOINTS.EQUIPOS_ONU}${queryString}`);
             return {
                 success: true,
                 data: response.data
@@ -1063,7 +1051,7 @@ class AlmacenService {
 
     async getEquipoONUHistorial(id) {
         try {
-            const response = await api.get(LEGACY_ENDPOINTS.EQUIPO_ONU_HISTORIAL(id));
+            const response = await api.get(ENDPOINTS.EQUIPO_ONU_HISTORIAL(id));
             return {
                 success: true,
                 data: response.data
@@ -1078,7 +1066,7 @@ class AlmacenService {
 
     async cambiarEstadoLegacy(id, estadoData) {
         try {
-            const response = await api.post(LEGACY_ENDPOINTS.EQUIPO_ONU_CAMBIAR_ESTADO(id), estadoData);
+            const response = await api.post(ENDPOINTS.EQUIPO_ONU_CAMBIAR_ESTADO(id), estadoData);
             return {
                 success: true,
                 data: response.data
@@ -1096,10 +1084,10 @@ class AlmacenService {
     async exportarDatos(tipo, params = {}) {
         try {
             const endpoints = {
-                'inventario': REPORTE_ENDPOINTS.REPORTE_INVENTARIO,
-                'movimientos': REPORTE_ENDPOINTS.REPORTE_MOVIMIENTOS,
-                'garantias': REPORTE_ENDPOINTS.REPORTE_GARANTIAS,
-                'eficiencia': REPORTE_ENDPOINTS.REPORTE_EFICIENCIA,
+                'inventario': ENDPOINTS.REPORTE_INVENTARIO,
+                'movimientos': ENDPOINTS.REPORTE_MOVIMIENTOS,
+                'garantias': ENDPOINTS.REPORTE_GARANTIAS,
+                'eficiencia': ENDPOINTS.REPORTE_EFICIENCIA,
             };
 
             if (!endpoints[tipo]) {
