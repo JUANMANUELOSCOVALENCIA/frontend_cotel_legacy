@@ -110,7 +110,7 @@ const Navbar = () => {
                     label: 'Migración',
                     href: '/usuarios/migracion',
                     icon: IoPersonAdd,
-                    permissions: [{ recurso: 'empleados', accion: 'leer' }],
+                    permissions: [{ recurso: 'usuarios', accion: 'leer' }],
                     description: 'Migrar empleados desde FDW'
                 }
             ]
@@ -130,7 +130,7 @@ const Navbar = () => {
                 },
                 {
                     label: 'Importar Equipos',
-                    href: '/almacenes/importacion',
+                    href: '/almacenes/marcas',
                     icon: IoCloudUpload,
                     permissions: [{ recurso: 'almacenes', accion: 'leer' }],
                     description: 'Importación masiva de equipos'
