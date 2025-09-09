@@ -20,6 +20,8 @@ import Profile from './core/auth/pages/Profile';
 import EmployeeMigration from "./core/permissions/pages/employeeMigration/index.jsx";
 import AlmacenesPage from "./core/almacenes/pages/almacenes/index.jsx";
 import MarcasPage from "./core/almacenes/pages/marcas/index.jsx";
+import LotesPage from "./core/almacenes/pages/lotes/index.jsx";
+import ONUsList from "./core/almacenes/pages/almacenes/ONUsList.jsx";
 
 function App() {
     const { isAuthenticated, loading, user } = useContext(AuthContext);
@@ -86,6 +88,8 @@ function App() {
                     <Route path="usuarios/migracion" element={<EmployeeMigration />} />
                     <Route path="almacenes/almacen" element={<AlmacenesPage />} />
                     <Route path="almacenes/marcas" element={<MarcasPage />} />
+                    <Route path="almacenes/lotes" element={<LotesPage />} />
+                    <Route path="almacenes/onus" element={<ONUsList />} />
 
                 </Route>
 

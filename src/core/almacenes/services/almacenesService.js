@@ -1,20 +1,49 @@
-// ======================================================
-// src/core/almacenes/services/almacenesService.js
-// ======================================================
-
-import api from '../../../services/api';
+import { api } from '../../../services/api';
 import { ENDPOINTS, buildQuery } from '../../../services/endpoints';
 
 class AlmacenesService {
-    // ========== ALMACENES ==========
+    // ========== OPCIONES COMPLETAS ==========
+    async getOpcionesCompletas() {
+        try {
+            const response = await api.get(ENDPOINTS.OPCIONES_COMPLETAS);
+            return {
+                success: true,
+                data: response.data.data
+            };
+        } catch (error) {
+            console.error('Error al obtener opciones completas:', error);
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener opciones'
+            };
+        }
+    }
 
+    async inicializarDatos() {
+        try {
+            const response = await api.post(ENDPOINTS.INICIALIZAR_DATOS);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al inicializar datos'
+            };
+        }
+    }
+
+    // ========== ALMACENES ==========
     async getAlmacenes(params = {}) {
         try {
             const queryString = buildQuery(params);
             const response = await api.get(`${ENDPOINTS.ALMACENES}${queryString}`);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error obteniendo almacenes:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al obtener almacenes'
@@ -22,12 +51,29 @@ class AlmacenesService {
         }
     }
 
+    async getAlmacen(id) {
+        try {
+            const response = await api.get(ENDPOINTS.ALMACEN_DETAIL(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener almacén'
+            };
+        }
+    }
+
     async createAlmacen(almacenData) {
         try {
             const response = await api.post(ENDPOINTS.ALMACENES, almacenData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error creando almacén:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al crear almacén'
@@ -38,9 +84,11 @@ class AlmacenesService {
     async updateAlmacen(id, almacenData) {
         try {
             const response = await api.put(ENDPOINTS.ALMACEN_DETAIL(id), almacenData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error actualizando almacén:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al actualizar almacén'
@@ -51,9 +99,11 @@ class AlmacenesService {
     async deleteAlmacen(id) {
         try {
             const response = await api.delete(ENDPOINTS.ALMACEN_DETAIL(id));
-            return { success: true, message: 'Almacén eliminado correctamente' };
+            return {
+                success: true,
+                message: 'Almacén eliminado correctamente'
+            };
         } catch (error) {
-            console.error('Error eliminando almacén:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al eliminar almacén'
@@ -61,25 +111,14 @@ class AlmacenesService {
         }
     }
 
-    async getAlmacenDetail(id) {
-        try {
-            const response = await api.get(ENDPOINTS.ALMACEN_DETAIL(id));
-            return { success: true, data: response.data };
-        } catch (error) {
-            console.error('Error obteniendo detalle del almacén:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al obtener detalle'
-            };
-        }
-    }
-
     async getAlmacenEstadisticas(id) {
         try {
             const response = await api.get(ENDPOINTS.ALMACEN_ESTADISTICAS(id));
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error obteniendo estadísticas del almacén:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al obtener estadísticas'
@@ -88,14 +127,15 @@ class AlmacenesService {
     }
 
     // ========== PROVEEDORES ==========
-
     async getProveedores(params = {}) {
         try {
             const queryString = buildQuery(params);
             const response = await api.get(`${ENDPOINTS.PROVEEDORES}${queryString}`);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error obteniendo proveedores:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al obtener proveedores'
@@ -103,12 +143,29 @@ class AlmacenesService {
         }
     }
 
+    async getProveedor(id) {
+        try {
+            const response = await api.get(ENDPOINTS.PROVEEDOR_DETAIL(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener proveedor'
+            };
+        }
+    }
+
     async createProveedor(proveedorData) {
         try {
             const response = await api.post(ENDPOINTS.PROVEEDORES, proveedorData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error creando proveedor:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al crear proveedor'
@@ -119,9 +176,11 @@ class AlmacenesService {
     async updateProveedor(id, proveedorData) {
         try {
             const response = await api.put(ENDPOINTS.PROVEEDOR_DETAIL(id), proveedorData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error actualizando proveedor:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al actualizar proveedor'
@@ -131,10 +190,12 @@ class AlmacenesService {
 
     async deleteProveedor(id) {
         try {
-            await api.delete(ENDPOINTS.PROVEEDOR_DETAIL(id));
-            return { success: true, message: 'Proveedor eliminado correctamente' };
+            const response = await api.delete(ENDPOINTS.PROVEEDOR_DETAIL(id));
+            return {
+                success: true,
+                message: 'Proveedor eliminado correctamente'
+            };
         } catch (error) {
-            console.error('Error eliminando proveedor:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al eliminar proveedor'
@@ -143,14 +204,15 @@ class AlmacenesService {
     }
 
     // ========== MARCAS ==========
-
     async getMarcas(params = {}) {
         try {
             const queryString = buildQuery(params);
             const response = await api.get(`${ENDPOINTS.MARCAS}${queryString}`);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error obteniendo marcas:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al obtener marcas'
@@ -158,12 +220,29 @@ class AlmacenesService {
         }
     }
 
+    async getMarca(id) {
+        try {
+            const response = await api.get(ENDPOINTS.MARCA_DETAIL(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener marca'
+            };
+        }
+    }
+
     async createMarca(marcaData) {
         try {
             const response = await api.post(ENDPOINTS.MARCAS, marcaData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error creando marca:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al crear marca'
@@ -174,9 +253,11 @@ class AlmacenesService {
     async updateMarca(id, marcaData) {
         try {
             const response = await api.put(ENDPOINTS.MARCA_DETAIL(id), marcaData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error actualizando marca:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al actualizar marca'
@@ -186,10 +267,12 @@ class AlmacenesService {
 
     async deleteMarca(id) {
         try {
-            await api.delete(ENDPOINTS.MARCA_DETAIL(id));
-            return { success: true, message: 'Marca eliminada correctamente' };
+            const response = await api.delete(ENDPOINTS.MARCA_DETAIL(id));
+            return {
+                success: true,
+                message: 'Marca eliminada correctamente'
+            };
         } catch (error) {
-            console.error('Error eliminando marca:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al eliminar marca'
@@ -200,25 +283,28 @@ class AlmacenesService {
     async toggleActivoMarca(id) {
         try {
             const response = await api.post(ENDPOINTS.MARCA_TOGGLE_ACTIVO(id));
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error cambiando estado de marca:', error);
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al cambiar estado'
+                error: error.response?.data?.message || 'Error al cambiar estado de marca'
             };
         }
     }
 
     // ========== TIPOS DE EQUIPO ==========
-
     async getTiposEquipo(params = {}) {
         try {
             const queryString = buildQuery(params);
             const response = await api.get(`${ENDPOINTS.TIPOS_EQUIPO}${queryString}`);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error obteniendo tipos de equipo:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al obtener tipos de equipo'
@@ -226,12 +312,29 @@ class AlmacenesService {
         }
     }
 
+    async getTipoEquipo(id) {
+        try {
+            const response = await api.get(ENDPOINTS.TIPO_EQUIPO_DETAIL(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener tipo de equipo'
+            };
+        }
+    }
+
     async createTipoEquipo(tipoData) {
         try {
             const response = await api.post(ENDPOINTS.TIPOS_EQUIPO, tipoData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error creando tipo de equipo:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al crear tipo de equipo'
@@ -242,9 +345,11 @@ class AlmacenesService {
     async updateTipoEquipo(id, tipoData) {
         try {
             const response = await api.put(ENDPOINTS.TIPO_EQUIPO_DETAIL(id), tipoData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error actualizando tipo de equipo:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al actualizar tipo de equipo'
@@ -254,10 +359,12 @@ class AlmacenesService {
 
     async deleteTipoEquipo(id) {
         try {
-            await api.delete(ENDPOINTS.TIPO_EQUIPO_DETAIL(id));
-            return { success: true, message: 'Tipo de equipo eliminado correctamente' };
+            const response = await api.delete(ENDPOINTS.TIPO_EQUIPO_DETAIL(id));
+            return {
+                success: true,
+                message: 'Tipo de equipo eliminado correctamente'
+            };
         } catch (error) {
-            console.error('Error eliminando tipo de equipo:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al eliminar tipo de equipo'
@@ -265,15 +372,31 @@ class AlmacenesService {
         }
     }
 
-    // ========== MODELOS ==========
+    async toggleActivoTipoEquipo(id) {
+        try {
+            const response = await api.post(ENDPOINTS.TIPO_EQUIPO_TOGGLE_ACTIVO(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al cambiar estado del tipo'
+            };
+        }
+    }
 
+    // ========== MODELOS ==========
     async getModelos(params = {}) {
         try {
             const queryString = buildQuery(params);
             const response = await api.get(`${ENDPOINTS.MODELOS}${queryString}`);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error obteniendo modelos:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al obtener modelos'
@@ -281,12 +404,29 @@ class AlmacenesService {
         }
     }
 
+    async getModelo(id) {
+        try {
+            const response = await api.get(ENDPOINTS.MODELO_DETAIL(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener modelo'
+            };
+        }
+    }
+
     async createModelo(modeloData) {
         try {
             const response = await api.post(ENDPOINTS.MODELOS, modeloData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error creando modelo:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al crear modelo'
@@ -297,9 +437,11 @@ class AlmacenesService {
     async updateModelo(id, modeloData) {
         try {
             const response = await api.put(ENDPOINTS.MODELO_DETAIL(id), modeloData);
-            return { success: true, data: response.data };
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error actualizando modelo:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al actualizar modelo'
@@ -309,10 +451,12 @@ class AlmacenesService {
 
     async deleteModelo(id) {
         try {
-            await api.delete(ENDPOINTS.MODELO_DETAIL(id));
-            return { success: true, message: 'Modelo eliminado correctamente' };
+            const response = await api.delete(ENDPOINTS.MODELO_DETAIL(id));
+            return {
+                success: true,
+                message: 'Modelo eliminado correctamente'
+            };
         } catch (error) {
-            console.error('Error eliminando modelo:', error);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Error al eliminar modelo'
@@ -320,198 +464,418 @@ class AlmacenesService {
         }
     }
 
-    // ========== TIPOS DE MATERIAL ==========
-
-    async getTiposMaterial(params = {}) {
+    async toggleActivoModelo(id) {
         try {
-            const queryString = buildQuery(params);
-            const response = await api.get(`${ENDPOINTS.TIPOS_MATERIAL}${queryString}`);
-            return { success: true, data: response.data };
-        } catch (error) {
-            console.error('Error obteniendo tipos de material:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al obtener tipos de material'
-            };
-        }
-    }
-
-    async createTipoMaterial(tipoData) {
-        try {
-            const response = await api.post(ENDPOINTS.TIPOS_MATERIAL, tipoData);
-            return { success: true, data: response.data };
-        } catch (error) {
-            console.error('Error creando tipo de material:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al crear tipo de material'
-            };
-        }
-    }
-
-    async updateTipoMaterial(id, tipoData) {
-        try {
-            const response = await api.put(ENDPOINTS.TIPO_MATERIAL_DETAIL(id), tipoData);
-            return { success: true, data: response.data };
-        } catch (error) {
-            console.error('Error actualizando tipo de material:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al actualizar tipo de material'
-            };
-        }
-    }
-
-    async deleteTipoMaterial(id) {
-        try {
-            await api.delete(ENDPOINTS.TIPO_MATERIAL_DETAIL(id));
-            return { success: true, message: 'Tipo de material eliminado correctamente' };
-        } catch (error) {
-            console.error('Error eliminando tipo de material:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al eliminar tipo de material'
-            };
-        }
-    }
-
-    // ========== OPCIONES PARA FORMULARIOS ==========
-
-    async getOpcionesCompletas() {
-        try {
-            // Como el endpoint opciones-completas no existe aún en el backend,
-            // vamos a obtener las opciones básicas que necesitamos por separado
-            const [
-                tiposAlmacenResult,
-                marcasResult,
-                tiposEquipoResult,
-                proveedoresResult,
-                almacenesResult
-            ] = await Promise.all([
-                this.getTiposAlmacen(),
-                this.getMarcas(),
-                this.getTiposEquipo(),
-                this.getProveedores(),
-                this.getAlmacenes()
-            ]);
-
-            // Construir objeto de opciones
-            const opciones = {
-                tipos_almacen: tiposAlmacenResult.success ? tiposAlmacenResult.data : [],
-                marcas: marcasResult.success ? marcasResult.data : [],
-                tipos_equipo: tiposEquipoResult.success ? tiposEquipoResult.data : [],
-                proveedores: proveedoresResult.success ? proveedoresResult.data : [],
-                almacenes: almacenesResult.success ? almacenesResult.data : [],
-                // Opciones por defecto mientras implementamos los endpoints
-                tipos_material: [
-                    { id: 1, codigo: 'ONU', nombre: 'Equipo ONU', es_unico: true },
-                    { id: 2, codigo: 'CABLE_DROP', nombre: 'Cable Drop', es_unico: false },
-                    { id: 3, codigo: 'CONECTOR', nombre: 'Conector', es_unico: false }
-                ],
-                unidades_medida: [
-                    { id: 1, codigo: 'PIEZA', nombre: 'Pieza', simbolo: 'pza' },
-                    { id: 2, codigo: 'METROS', nombre: 'Metros', simbolo: 'm' },
-                    { id: 3, codigo: 'CAJA', nombre: 'Caja', simbolo: 'cja' }
-                ]
-            };
-
-            return { success: true, data: { data: opciones } };
-        } catch (error) {
-            console.error('Error obteniendo opciones completas:', error);
-            return {
-                success: false,
-                error: 'Error al obtener opciones para formularios'
-            };
-        }
-    }
-
-    async inicializarDatos() {
-        try {
-            // Por ahora retornamos un éxito simulado
-            // Este endpoint se implementará cuando el backend lo tenga
+            const response = await api.post(ENDPOINTS.MODELO_TOGGLE_ACTIVO(id));
             return {
                 success: true,
-                message: 'Endpoint de inicialización pendiente de implementar en backend'
+                data: response.data
             };
         } catch (error) {
-            console.error('Error inicializando datos:', error);
             return {
                 success: false,
-                error: 'Error al inicializar datos'
+                error: error.response?.data?.message || 'Error al cambiar estado del modelo'
             };
         }
     }
 
-    // ========== TIPOS DE ALMACÉN ==========
-
-    async getTiposAlmacen() {
+    // ========== COMPONENTES ==========
+    async getComponentes(params = {}) {
         try {
-            const response = await api.get(ENDPOINTS.TIPOS_ALMACEN);
-            return { success: true, data: response.data };
+            const queryString = buildQuery(params);
+            const response = await api.get(`${ENDPOINTS.COMPONENTES}${queryString}`);
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error obteniendo tipos de almacén:', error);
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al obtener tipos de almacén'
+                error: error.response?.data?.message || 'Error al obtener componentes'
             };
         }
     }
 
-    // ========== OPCIONES PARA FORMULARIOS ==========
-
-    async getOpcionesCompletas() {
+    async createComponente(componenteData) {
         try {
-            // Obtener opciones reales del backend
-            const [
-                tiposAlmacenResult,
-                marcasResult,
-                tiposEquipoResult,
-                proveedoresResult,
-                almacenesResult,
-                tiposMaterialResult,
-                unidadesMedidaResult
-            ] = await Promise.all([
-                this.getTiposAlmacen(),
-                this.getMarcas(),
-                this.getTiposEquipo(),
-                this.getProveedores(),
-                this.getAlmacenes(),
-                this.getTiposMaterial(),
-                this.getUnidadesMedida()
-            ]);
-
-            // Construir objeto de opciones con datos reales
-            const opciones = {
-                tipos_almacen: tiposAlmacenResult.success ? (tiposAlmacenResult.data.results || tiposAlmacenResult.data) : [],
-                marcas: marcasResult.success ? (marcasResult.data.results || marcasResult.data) : [],
-                tipos_equipo: tiposEquipoResult.success ? (tiposEquipoResult.data.results || tiposEquipoResult.data) : [],
-                proveedores: proveedoresResult.success ? (proveedoresResult.data.results || proveedoresResult.data) : [],
-                almacenes: almacenesResult.success ? (almacenesResult.data.results || almacenesResult.data) : [],
-                tipos_material: tiposMaterialResult.success ? (tiposMaterialResult.data.results || tiposMaterialResult.data) : [],
-                unidades_medida: unidadesMedidaResult.success ? (unidadesMedidaResult.data.results || unidadesMedidaResult.data) : []
+            const response = await api.post(ENDPOINTS.COMPONENTES, componenteData);
+            return {
+                success: true,
+                data: response.data
             };
-
-            return { success: true, data: { data: opciones } };
         } catch (error) {
-            console.error('Error obteniendo opciones completas:', error);
             return {
                 success: false,
-                error: 'Error al obtener opciones para formularios'
+                error: error.response?.data?.message || 'Error al crear componente'
             };
         }
     }
 
-    // ========== UNIDADES DE MEDIDA ==========
-
-    async getUnidadesMedida() {
+    // ========== LOTES ==========
+    async getLotes(params = {}) {
         try {
-            const response = await api.get(ENDPOINTS.UNIDADES_MEDIDA);
-            return { success: true, data: response.data };
+            const queryString = buildQuery(params);
+            const response = await api.get(`${ENDPOINTS.LOTES}${queryString}`);
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
-            console.error('Error obteniendo unidades de medida:', error);
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al obtener unidades de medida'
+                error: error.response?.data?.message || 'Error al obtener lotes'
+            };
+        }
+    }
+
+    async getLote(id) {
+        try {
+            const response = await api.get(ENDPOINTS.LOTE_DETAIL(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener lote'
+            };
+        }
+    }
+
+    async createLote(loteData) {
+        try {
+            const response = await api.post(ENDPOINTS.LOTES, loteData);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al crear lote'
+            };
+        }
+    }
+
+    async updateLote(id, loteData) {
+        try {
+            const response = await api.put(ENDPOINTS.LOTE_DETAIL(id), loteData);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al actualizar lote'
+            };
+        }
+    }
+
+    async deleteLote(id) {
+        try {
+            const response = await api.delete(ENDPOINTS.LOTE_DETAIL(id));
+            return {
+                success: true,
+                message: 'Lote eliminado correctamente'
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al eliminar lote'
+            };
+        }
+    }
+
+    async getLoteResumen(id) {
+        try {
+            const response = await api.get(ENDPOINTS.LOTE_RESUMEN(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener resumen del lote'
+            };
+        }
+    }
+
+    async getLoteMateriales(id, params = {}) {
+        try {
+            const queryString = buildQuery(params);
+            const response = await api.get(`${ENDPOINTS.LOTE_MATERIALES(id)}${queryString}`);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener materiales del lote'
+            };
+        }
+    }
+
+    async cerrarLote(id) {
+        try {
+            const response = await api.post(ENDPOINTS.LOTE_CERRAR(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al cerrar lote'
+            };
+        }
+    }
+
+    async reabrirLote(id) {
+        try {
+            const response = await api.post(ENDPOINTS.LOTE_REABRIR(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al reabrir lote'
+            };
+        }
+    }
+
+    // ========== IMPORTACIÓN MASIVA (ACTUALIZADO) ==========
+    async importarMaterialesMasivo(archivo, loteId, modeloId, itemEquipo, esValidacion = false) {
+        try {
+            console.log('🔍 SERVICE DEBUG - Parámetros recibidos:', {
+                archivo: archivo?.name,
+                loteId,
+                modeloId,
+                itemEquipo,
+                esValidacion
+            });
+
+            const formData = new FormData();
+            formData.append('archivo', archivo);
+            formData.append('lote_id', loteId);
+            formData.append('modelo_id', modeloId);
+            formData.append('item_equipo', itemEquipo); // NUEVO PARÁMETRO
+            formData.append('validacion', esValidacion);
+
+            // DEBUGGING: Ver qué contiene exactamente el FormData
+            console.log('📤 FormData siendo enviado:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`   ${key}: ${value} (tipo: ${typeof value})`);
+            }
+
+            const response = await api.post(ENDPOINTS.IMPORTACION_MASIVA, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error en la importación masiva'
+            };
+        }
+    }
+    async importacionMasiva(formData) {
+        try {
+            const response = await api.post(ENDPOINTS.IMPORTACION_MASIVA, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error en la importación masiva'
+            };
+        }
+    }
+
+    async getPlantillaImportacion() {
+        try {
+            const response = await api.get(ENDPOINTS.IMPORTACION_MASIVA);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener plantilla'
+            };
+        }
+    }
+
+    // ========== MATERIALES ==========
+    async getMateriales(params = {}) {
+        try {
+            const queryString = buildQuery(params);
+            const response = await api.get(`${ENDPOINTS.MATERIALES}${queryString}`);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener materiales'
+            };
+        }
+    }
+
+    async getMaterial(id) {
+        try {
+            const response = await api.get(ENDPOINTS.MATERIAL_DETAIL(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener material'
+            };
+        }
+    }
+
+    async getMaterialHistorial(id) {
+        try {
+            const response = await api.get(ENDPOINTS.MATERIAL_HISTORIAL(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener historial'
+            };
+        }
+    }
+
+    // ========== ESTADÍSTICAS Y REPORTES ==========
+    async getEstadisticasGenerales() {
+        try {
+            const response = await api.get(ENDPOINTS.ESTADISTICAS_GENERALES);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener estadísticas'
+            };
+        }
+    }
+
+    async getDashboard() {
+        try {
+            const response = await api.get(ENDPOINTS.DASHBOARD_ALMACENES);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener dashboard'
+            };
+        }
+    }
+    // ========== MATERIALES ==========
+    async getMateriales(params = {}) {
+        try {
+            const queryString = buildQuery(params);
+            const response = await api.get(`${ENDPOINTS.MATERIALES}${queryString}`);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener materiales'
+            };
+        }
+    }
+
+    async getMaterial(id) {
+        try {
+            const response = await api.get(ENDPOINTS.MATERIAL_DETAIL(id));
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener material'
+            };
+        }
+    }
+
+    async getEstadisticasMateriales(filtros = {}) {
+        try {
+            const queryString = buildQuery(filtros);
+            const response = await api.get(`${ENDPOINTS.MATERIALES}/estadisticas/${queryString}`);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al obtener estadísticas'
+            };
+        }
+    }
+
+    async cambiarEstadoMaterial(id, estadoId) {
+        try {
+            const response = await api.post(`${ENDPOINTS.MATERIAL_DETAIL(id)}/cambiar_estado/`, {
+                estado_id: estadoId
+            });
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error al cambiar estado'
+            };
+        }
+    }
+
+    async busquedaAvanzadaMateriales(criterios) {
+        try {
+            const response = await api.post(`${ENDPOINTS.MATERIALES}/busqueda_avanzada/`, criterios);
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Error en búsqueda avanzada'
             };
         }
     }

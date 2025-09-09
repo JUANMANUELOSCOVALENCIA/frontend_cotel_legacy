@@ -122,14 +122,14 @@ const Navbar = () => {
             type: 'dropdown',
             submenu: [
                 {
-                    label: 'Gestión de Almacenes',
-                    href: '/almacenes/gestion',
+                    label: 'Gestión de Lotes',
+                    href: '/almacenes/lotes',
                     icon: IoArchive,
                     permissions: [{ recurso: 'almacenes', accion: 'leer' }],
                     description: 'Administrar inventario y almacenes'
                 },
                 {
-                    label: 'Importar Equipos',
+                    label: 'Gestión de Marcas',
                     href: '/almacenes/marcas',
                     icon: IoCloudUpload,
                     permissions: [{ recurso: 'almacenes', accion: 'leer' }],
@@ -141,7 +141,21 @@ const Navbar = () => {
                     icon: IoCloudUpload,
                     permissions: [{ recurso: 'almacenes', accion: 'leer' }],
                     description: 'Importación masiva de equipos'
-                }
+                },
+                {
+                    label: 'Equipos ONU',
+                    href: '/almacenes/onus',
+                    icon: IoCloudUpload,
+                    permissions: [{ recurso: 'almacenes', accion: 'leer' }],
+                    description: 'Equipos ONU'
+                },
+                {
+                    label: 'Modelos',
+                    href: '/almacenes/onus',
+                    icon: IoCloudUpload,
+                    permissions: [{ recurso: 'almacenes', accion: 'leer' }],
+                    description: 'Modelos Equipo ONU'
+                },
             ]
         },
         {
@@ -217,7 +231,7 @@ const Navbar = () => {
                                     className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 font-medium normal-case ${
                                         isRouteActive(null, item.submenu)
                                             ? 'bg-orange-500 text-white shadow-md border border-orange-600'
-                                            : 'text-gray-700 bg-white border border-gray-200 hover:bg-orange-500 hover:text-white hover:border-orange-600 shadow-sm'
+                                            : 'text-gray-800 bg-gray-50 border border-gray-300 hover:bg-orange-500 hover:text-white hover:border-orange-600 shadow-sm'
                                     }`}
                                 >
                                     <item.icon className="h-5 w-5" />
@@ -247,7 +261,7 @@ const Navbar = () => {
                                                     <div className="flex items-start gap-3">
                                                         <subItem.icon className="h-5 w-5 text-orange-500 mt-0.5" />
                                                         <div>
-                                                            <Typography variant="small" className="font-medium">
+                                                            <Typography variant="small" color="gray" className="font-medium">
                                                                 {subItem.label}
                                                             </Typography>
                                                             <Typography variant="small" color="gray" className="font-normal text-xs">
@@ -278,7 +292,7 @@ const Navbar = () => {
                                 className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
                                     isRouteActive(item.href)
                                         ? 'bg-orange-500 text-white shadow-md border border-orange-600'
-                                        : 'text-gray-700 bg-white border border-gray-200 hover:bg-orange-500 hover:text-white hover:border-orange-600 shadow-sm'
+                                        : 'text-gray-800 bg-gray-50 border border-gray-300 hover:bg-orange-500 hover:text-white hover:border-orange-600 shadow-sm'
                                 }`}
                                 onClick={() => setIsNavOpen(false)}
                             >
@@ -318,7 +332,7 @@ const Navbar = () => {
                                             >
                                                 <subItem.icon className="h-4 w-4" />
                                                 <div>
-                                                    <Typography variant="small" className="font-medium">
+                                                    <Typography variant="small" color="gray" className="font-medium">
                                                         {subItem.label}
                                                     </Typography>
                                                     <Typography variant="small" color="gray" className="text-xs">
@@ -359,7 +373,7 @@ const Navbar = () => {
             <Button
                 variant="text"
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="flex items-center gap-2 rounded-lg py-2 pr-3 pl-2 bg-white border border-gray-200 text-gray-700 hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 shadow-sm"
+                className="flex items-center gap-2 rounded-lg py-2 pr-3 pl-2 bg-gray-50 border border-gray-300 text-gray-800 hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 shadow-sm"
             >
                 <Avatar
                     variant="circular"

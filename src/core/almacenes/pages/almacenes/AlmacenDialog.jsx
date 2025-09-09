@@ -1,5 +1,5 @@
 // ======================================================
-// src/core/almacenes/pages/almacenes/AlmacenDialog.jsx
+// src/core/almacenes/pages/almacenes/AlmacenDialog.jsx - CORREGIDO
 // ======================================================
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +17,8 @@ import {
     Spinner
 } from '@material-tailwind/react';
 import { useForm } from 'react-hook-form';
-import { useOpcionesAlmacenes } from '../../hooks/useAlmacenes';
+// ✅ CORRECCIÓN: Importar el hook correcto
+import { useOpcionesCompletas } from '../../hooks/useAlmacenes';
 
 const AlmacenDialog = ({
                            open,
@@ -27,7 +28,8 @@ const AlmacenDialog = ({
                            mode = 'create',
                            initialData = null
                        }) => {
-    const { opciones, loading: loadingOpciones } = useOpcionesAlmacenes();
+    // ✅ CORRECCIÓN: Usar el hook correcto
+    const { opciones, loading: loadingOpciones } = useOpcionesCompletas();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
@@ -213,6 +215,7 @@ const AlmacenDialog = ({
                                     disabled={submitting}
                                 >
                                     <option value="">Seleccionar tipo *</option>
+                                    {/* ✅ CORRECCIÓN: Usar opciones.tipos_almacen */}
                                     {opciones.tipos_almacen?.map(tipo => (
                                         <option key={tipo.id} value={tipo.id}>
                                             {tipo.nombre}
@@ -320,6 +323,15 @@ const AlmacenDialog = ({
                             disabled={submitting}
                         />
                     </div>
+
+                    {/* ✅ AGREGAR: Preview de datos para debugging si es necesario */}
+                    {loadingOpciones && (
+                        <Alert color="blue">
+                            <Typography variant="small">
+                                Cargando opciones del sistema...
+                            </Typography>
+                        </Alert>
+                    )}
                 </DialogBody>
 
                 <DialogFooter className="space-x-2">

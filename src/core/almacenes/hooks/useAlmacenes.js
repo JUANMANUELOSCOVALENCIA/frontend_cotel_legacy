@@ -1,14 +1,10 @@
-// ======================================================
-// src/core/almacenes/hooks/useAlmacenes.js
-// ======================================================
-
 import { useState, useEffect, useCallback } from 'react';
 import almacenesService from '../services/almacenesService';
-import toast from 'react-hot-toast';
+import { usePermissions } from '../../permissions/hooks/usePermissions';
 
-// ========== HOOK PRINCIPAL PARA ALMACENES ==========
-
+// ========== HOOK PRINCIPAL DE ALMACENES ==========
 export const useAlmacenes = () => {
+    const { hasPermission } = usePermissions();
     const [almacenes, setAlmacenes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -24,7 +20,6 @@ export const useAlmacenes = () => {
 
         try {
             const result = await almacenesService.getAlmacenes(params);
-
             if (result.success) {
                 setAlmacenes(result.data.results || result.data);
                 setPagination({
@@ -34,12 +29,9 @@ export const useAlmacenes = () => {
                 });
             } else {
                 setError(result.error);
-                toast.error(result.error);
             }
         } catch (err) {
-            const errorMsg = 'Error al cargar almacenes';
-            setError(errorMsg);
-            toast.error(errorMsg);
+            setError('Error al cargar almacenes');
         } finally {
             setLoading(false);
         }
@@ -50,16 +42,15 @@ export const useAlmacenes = () => {
         try {
             const result = await almacenesService.createAlmacen(almacenData);
             if (result.success) {
-                toast.success('Almacén creado correctamente');
                 await loadAlmacenes();
                 return { success: true, data: result.data };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al crear almacén';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -71,16 +62,15 @@ export const useAlmacenes = () => {
         try {
             const result = await almacenesService.updateAlmacen(id, almacenData);
             if (result.success) {
-                toast.success('Almacén actualizado correctamente');
                 await loadAlmacenes();
                 return { success: true, data: result.data };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al actualizar almacén';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -92,16 +82,15 @@ export const useAlmacenes = () => {
         try {
             const result = await almacenesService.deleteAlmacen(id);
             if (result.success) {
-                toast.success('Almacén eliminado correctamente');
                 await loadAlmacenes();
-                return { success: true };
+                return { success: true, message: result.message };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al eliminar almacén';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -118,12 +107,18 @@ export const useAlmacenes = () => {
         updateAlmacen,
         deleteAlmacen,
         clearError: () => setError(null),
+        permissions: {
+            canCreate: hasPermission('almacenes', 'crear'),
+            canEdit: hasPermission('almacenes', 'actualizar'),
+            canDelete: hasPermission('almacenes', 'eliminar'),
+            canView: hasPermission('almacenes', 'leer')
+        }
     };
 };
 
 // ========== HOOK PARA PROVEEDORES ==========
-
 export const useProveedores = () => {
+    const { hasPermission } = usePermissions();
     const [proveedores, setProveedores] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -134,17 +129,13 @@ export const useProveedores = () => {
 
         try {
             const result = await almacenesService.getProveedores(params);
-
             if (result.success) {
                 setProveedores(result.data.results || result.data);
             } else {
                 setError(result.error);
-                toast.error(result.error);
             }
         } catch (err) {
-            const errorMsg = 'Error al cargar proveedores';
-            setError(errorMsg);
-            toast.error(errorMsg);
+            setError('Error al cargar proveedores');
         } finally {
             setLoading(false);
         }
@@ -155,16 +146,15 @@ export const useProveedores = () => {
         try {
             const result = await almacenesService.createProveedor(proveedorData);
             if (result.success) {
-                toast.success('Proveedor creado correctamente');
                 await loadProveedores();
                 return { success: true, data: result.data };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al crear proveedor';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -176,16 +166,15 @@ export const useProveedores = () => {
         try {
             const result = await almacenesService.updateProveedor(id, proveedorData);
             if (result.success) {
-                toast.success('Proveedor actualizado correctamente');
                 await loadProveedores();
                 return { success: true, data: result.data };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al actualizar proveedor';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -197,16 +186,15 @@ export const useProveedores = () => {
         try {
             const result = await almacenesService.deleteProveedor(id);
             if (result.success) {
-                toast.success('Proveedor eliminado correctamente');
                 await loadProveedores();
-                return { success: true };
+                return { success: true, message: result.message };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al eliminar proveedor';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -222,12 +210,18 @@ export const useProveedores = () => {
         updateProveedor,
         deleteProveedor,
         clearError: () => setError(null),
+        permissions: {
+            canCreate: hasPermission('proveedores', 'crear'),
+            canEdit: hasPermission('proveedores', 'actualizar'),
+            canDelete: hasPermission('proveedores', 'eliminar'),
+            canView: hasPermission('proveedores', 'leer')
+        }
     };
 };
 
 // ========== HOOK PARA MARCAS ==========
-
 export const useMarcas = () => {
+    const { hasPermission } = usePermissions();
     const [marcas, setMarcas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -238,17 +232,13 @@ export const useMarcas = () => {
 
         try {
             const result = await almacenesService.getMarcas(params);
-
             if (result.success) {
                 setMarcas(result.data.results || result.data);
             } else {
                 setError(result.error);
-                toast.error(result.error);
             }
         } catch (err) {
-            const errorMsg = 'Error al cargar marcas';
-            setError(errorMsg);
-            toast.error(errorMsg);
+            setError('Error al cargar marcas');
         } finally {
             setLoading(false);
         }
@@ -259,16 +249,15 @@ export const useMarcas = () => {
         try {
             const result = await almacenesService.createMarca(marcaData);
             if (result.success) {
-                toast.success('Marca creada correctamente');
                 await loadMarcas();
                 return { success: true, data: result.data };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al crear marca';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -280,16 +269,15 @@ export const useMarcas = () => {
         try {
             const result = await almacenesService.updateMarca(id, marcaData);
             if (result.success) {
-                toast.success('Marca actualizada correctamente');
                 await loadMarcas();
                 return { success: true, data: result.data };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al actualizar marca';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -301,16 +289,15 @@ export const useMarcas = () => {
         try {
             const result = await almacenesService.deleteMarca(id);
             if (result.success) {
-                toast.success('Marca eliminada correctamente');
                 await loadMarcas();
-                return { success: true };
+                return { success: true, message: result.message };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al eliminar marca';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -322,16 +309,15 @@ export const useMarcas = () => {
         try {
             const result = await almacenesService.toggleActivoMarca(id);
             if (result.success) {
-                toast.success(result.data.message || 'Estado actualizado');
                 await loadMarcas();
                 return { success: true, data: result.data };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
-            const error = 'Error al cambiar estado';
-            toast.error(error);
+            const error = 'Error al cambiar estado de marca';
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -348,12 +334,18 @@ export const useMarcas = () => {
         deleteMarca,
         toggleActivoMarca,
         clearError: () => setError(null),
+        permissions: {
+            canCreate: hasPermission('marcas', 'crear'),
+            canEdit: hasPermission('marcas', 'actualizar'),
+            canDelete: hasPermission('marcas', 'eliminar'),
+            canView: hasPermission('marcas', 'leer')
+        }
     };
 };
 
 // ========== HOOK PARA MODELOS ==========
-
 export const useModelos = () => {
+    const { hasPermission } = usePermissions();
     const [modelos, setModelos] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -364,17 +356,13 @@ export const useModelos = () => {
 
         try {
             const result = await almacenesService.getModelos(params);
-
             if (result.success) {
                 setModelos(result.data.results || result.data);
             } else {
                 setError(result.error);
-                toast.error(result.error);
             }
         } catch (err) {
-            const errorMsg = 'Error al cargar modelos';
-            setError(errorMsg);
-            toast.error(errorMsg);
+            setError('Error al cargar modelos');
         } finally {
             setLoading(false);
         }
@@ -385,16 +373,15 @@ export const useModelos = () => {
         try {
             const result = await almacenesService.createModelo(modeloData);
             if (result.success) {
-                toast.success('Modelo creado correctamente');
                 await loadModelos();
                 return { success: true, data: result.data };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al crear modelo';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -406,16 +393,15 @@ export const useModelos = () => {
         try {
             const result = await almacenesService.updateModelo(id, modeloData);
             if (result.success) {
-                toast.success('Modelo actualizado correctamente');
                 await loadModelos();
                 return { success: true, data: result.data };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al actualizar modelo';
-            toast.error(error);
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -427,16 +413,35 @@ export const useModelos = () => {
         try {
             const result = await almacenesService.deleteModelo(id);
             if (result.success) {
-                toast.success('Modelo eliminado correctamente');
                 await loadModelos();
-                return { success: true };
+                return { success: true, message: result.message };
             } else {
-                toast.error(result.error);
+                setError(result.error);
                 return { success: false, error: result.error };
             }
         } catch (err) {
             const error = 'Error al eliminar modelo';
-            toast.error(error);
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, [loadModelos]);
+
+    const toggleActivoModelo = useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const result = await almacenesService.toggleActivoModelo(id);
+            if (result.success) {
+                await loadModelos();
+                return { success: true, data: result.data };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error al cambiar estado del modelo';
+            setError(error);
             return { success: false, error };
         } finally {
             setLoading(false);
@@ -451,22 +456,125 @@ export const useModelos = () => {
         createModelo,
         updateModelo,
         deleteModelo,
+        toggleActivoModelo,
         clearError: () => setError(null),
+        permissions: {
+            canCreate: hasPermission('modelos', 'crear'),
+            canEdit: hasPermission('modelos', 'actualizar'),
+            canDelete: hasPermission('modelos', 'eliminar'),
+            canView: hasPermission('modelos', 'leer')
+        }
     };
 };
 
-// ========== HOOK PARA OPCIONES ==========
+// ========== HOOK PARA TIPOS DE EQUIPO ==========
+export const useTiposEquipo = () => {
+    const { hasPermission } = usePermissions();
+    const [tiposEquipo, setTiposEquipo] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-export const useOpcionesAlmacenes = () => {
-    const [opciones, setOpciones] = useState({
-        tipos_almacen: [],
-        tipos_material: [],
-        unidades_medida: [],
-        marcas: [],
-        tipos_equipo: [],
-        proveedores: [],
-        almacenes: [],
-    });
+    const loadTiposEquipo = useCallback(async (params = {}) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const result = await almacenesService.getTiposEquipo(params);
+            if (result.success) {
+                setTiposEquipo(result.data.results || result.data);
+            } else {
+                setError(result.error);
+            }
+        } catch (err) {
+            setError('Error al cargar tipos de equipo');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const createTipoEquipo = useCallback(async (tipoData) => {
+        setLoading(true);
+        try {
+            const result = await almacenesService.createTipoEquipo(tipoData);
+            if (result.success) {
+                await loadTiposEquipo();
+                return { success: true, data: result.data };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error al crear tipo de equipo';
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, [loadTiposEquipo]);
+
+    const updateTipoEquipo = useCallback(async (id, tipoData) => {
+        setLoading(true);
+        try {
+            const result = await almacenesService.updateTipoEquipo(id, tipoData);
+            if (result.success) {
+                await loadTiposEquipo();
+                return { success: true, data: result.data };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error al actualizar tipo de equipo';
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, [loadTiposEquipo]);
+
+    const deleteTipoEquipo = useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const result = await almacenesService.deleteTipoEquipo(id);
+            if (result.success) {
+                await loadTiposEquipo();
+                return { success: true, message: result.message };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error al eliminar tipo de equipo';
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, [loadTiposEquipo]);
+
+    return {
+        tiposEquipo,
+        loading,
+        error,
+        loadTiposEquipo,
+        createTipoEquipo,
+        updateTipoEquipo,
+        deleteTipoEquipo,
+        clearError: () => setError(null),
+        permissions: {
+            canCreate: hasPermission('tipos_equipo', 'crear'),
+            canEdit: hasPermission('tipos_equipo', 'actualizar'),
+            canDelete: hasPermission('tipos_equipo', 'eliminar'),
+            canView: hasPermission('tipos_equipo', 'leer')
+        }
+    };
+};
+
+// ========== HOOKS ANTERIORES (Opciones, Lotes, Importación) ==========
+// [Los hooks anteriores se mantienen igual...]
+
+export const useOpcionesCompletas = () => {
+    const [opciones, setOpciones] = useState({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -476,23 +584,23 @@ export const useOpcionesAlmacenes = () => {
 
         try {
             const result = await almacenesService.getOpcionesCompletas();
+            console.log('🔍 RESULTADO DE getOpcionesCompletas:', result);
 
             if (result.success) {
-                setOpciones(result.data.data || result.data);
+                console.log('🔍 DATOS RECIBIDOS:', result.data);
+                console.log('🔍 LOTES EN DATOS:', result.data.lotes);
+                setOpciones(result.data);
             } else {
                 setError(result.error);
-                toast.error(result.error);
             }
         } catch (err) {
-            const errorMsg = 'Error al cargar opciones';
-            setError(errorMsg);
-            toast.error(errorMsg);
+            console.error('❌ ERROR:', err);
+            setError('Error al cargar opciones');
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Cargar opciones al montar el componente
     useEffect(() => {
         loadOpciones();
     }, [loadOpciones]);
@@ -501,7 +609,141 @@ export const useOpcionesAlmacenes = () => {
         opciones,
         loading,
         error,
-        loadOpciones,
+        refetchOpciones: loadOpciones
+    };
+};
+
+export const useLotes = () => {
+    const { hasPermission } = usePermissions();
+    const [lotes, setLotes] = useState([]);
+    const [loteActual, setLoteActual] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const loadLotes = useCallback(async (params = {}) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const result = await almacenesService.getLotes(params);
+            if (result.success) {
+                setLotes(result.data.results || result.data);
+            } else {
+                setError(result.error);
+            }
+        } catch (err) {
+            setError('Error al cargar lotes');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const createLote = useCallback(async (loteData) => {
+        setLoading(true);
+        try {
+            const result = await almacenesService.createLote(loteData);
+            if (result.success) {
+                await loadLotes();
+                return { success: true, data: result.data };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error al crear lote';
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, [loadLotes]);
+
+    const loadLoteDetail = useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const result = await almacenesService.getLote(id);
+            if (result.success) {
+                setLoteActual(result.data);
+                return { success: true, data: result.data };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error al cargar detalle del lote';
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return {
+        lotes,
+        loteActual,
+        loading,
+        error,
+        loadLotes,
+        createLote,
+        loadLoteDetail,
         clearError: () => setError(null),
+        permissions: {
+            canCreate: hasPermission('lotes', 'crear'),
+            canEdit: hasPermission('lotes', 'actualizar'),
+            canDelete: hasPermission('lotes', 'eliminar'),
+            canView: hasPermission('lotes', 'leer'),
+            canImport: hasPermission('lotes', 'leer')
+        }
+    };
+};
+
+export const useImportacionMasiva = () => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [resultado, setResultado] = useState(null);
+
+    // FUNCIÓN ACTUALIZADA con itemEquipo
+    const importarArchivo = useCallback(async (archivo, loteId, modeloId, itemEquipo, esValidacion = false) => {
+        setLoading(true);
+        setError(null);
+        setResultado(null);
+
+        try {
+            // USAR la nueva función del servicio
+            const result = await almacenesService.importarMaterialesMasivo(archivo, loteId, modeloId, itemEquipo, esValidacion);
+
+            if (result.success) {
+                setResultado(result.data.resultado);
+                return { success: true, data: result.data };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error en la importación';
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const obtenerPlantilla = useCallback(async () => {
+        try {
+            const result = await almacenesService.getPlantillaImportacion();
+            return result;
+        } catch (err) {
+            return { success: false, error: 'Error al obtener plantilla' };
+        }
+    }, []);
+
+    return {
+        loading,
+        error,
+        resultado,
+        importarArchivo,
+        obtenerPlantilla,
+        clearError: () => setError(null),
+        clearResultado: () => setResultado(null)
     };
 };

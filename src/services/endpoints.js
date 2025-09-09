@@ -186,7 +186,7 @@ export const ENDPOINTS = {
 
     // === OPCIONES COMPLETAS (PARA FORMULARIOS) ===
     OPCIONES_COMPLETAS: '/almacenes/opciones-completas/',
-    INICIALIZAR_DATOS: '/almacenes/inicializar-datos/'
+    INICIALIZAR_DATOS: '/almacenes/inicializar-datos/',
 };
 
 // ========== GRUPOS ORGANIZADOS ==========
