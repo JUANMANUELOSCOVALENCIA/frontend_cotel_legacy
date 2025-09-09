@@ -151,7 +151,7 @@ const Navbar = () => {
                 },
                 {
                     label: 'Modelos',
-                    href: '/almacenes/onus',
+                    href: '/almacenes/modelos',
                     icon: IoCloudUpload,
                     permissions: [{ recurso: 'almacenes', accion: 'leer' }],
                     description: 'Modelos Equipo ONU'

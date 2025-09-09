@@ -419,17 +419,56 @@ class AlmacenesService {
         }
     }
 
+    // src/core/almacenes/services/almacenesService.js - CORRECCIÓN EN createModelo
     async createModelo(modeloData) {
         try {
-            const response = await api.post(ENDPOINTS.MODELOS, modeloData);
+            console.log('🚀 almacenesService.createModelo - Datos recibidos:', modeloData);
+
+            // ✅ LIMPIAR DATOS COMPLETAMENTE
+            const cleanData = {
+                nombre: String(modeloData.nombre || '').trim(),
+                codigo_modelo: String(modeloData.codigo_modelo || '').trim(),
+                marca: Number(modeloData.marca),
+                tipo_material: Number(modeloData.tipo_material), // ✅ SOLO tipo_material
+                unidad_medida: Number(modeloData.unidad_medida),
+                requiere_inspeccion_inicial: Boolean(modeloData.requiere_inspeccion_inicial),
+                descripcion: String(modeloData.descripcion || '').trim()
+            };
+
+            // ✅ VERIFICAR QUE NO HAY VALORES NaN
+            if (isNaN(cleanData.marca)) {
+                throw new Error('Marca inválida');
+            }
+            if (isNaN(cleanData.tipo_material)) {
+                throw new Error('Tipo de material inválido');
+            }
+            if (isNaN(cleanData.unidad_medida)) {
+                throw new Error('Unidad de medida inválida');
+            }
+
+            console.log('📤 Enviando POST a:', ENDPOINTS.MODELOS);
+            console.log('📤 Datos finales:', JSON.stringify(cleanData, null, 2));
+            console.log('🔍 Verificación de tipos:');
+            Object.entries(cleanData).forEach(([key, value]) => {
+                console.log(`  ${key}: ${typeof value} = ${value}`);
+            });
+
+            const response = await api.post(ENDPOINTS.MODELOS, cleanData);
+
+            console.log('✅ Respuesta exitosa del backend:', response.data);
+
             return {
                 success: true,
                 data: response.data
             };
         } catch (error) {
+            console.error('❌ Error en createModelo:', error);
+            console.error('❌ Error response:', error.response?.data);
+            console.error('❌ Error status:', error.response?.status);
+
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al crear modelo'
+                error: error.response?.data?.message || error.message || 'Error al crear modelo'
             };
         }
     }

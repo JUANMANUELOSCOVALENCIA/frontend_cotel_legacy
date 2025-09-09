@@ -22,6 +22,7 @@ import AlmacenesPage from "./core/almacenes/pages/almacenes/index.jsx";
 import MarcasPage from "./core/almacenes/pages/marcas/index.jsx";
 import LotesPage from "./core/almacenes/pages/lotes/index.jsx";
 import ONUsList from "./core/almacenes/pages/almacenes/ONUsList.jsx";
+import ModelosPage from "./core/almacenes/pages/modelos/index.jsx";
 
 function App() {
     const { isAuthenticated, loading, user } = useContext(AuthContext);
@@ -90,6 +91,7 @@ function App() {
                     <Route path="almacenes/marcas" element={<MarcasPage />} />
                     <Route path="almacenes/lotes" element={<LotesPage />} />
                     <Route path="almacenes/onus" element={<ONUsList />} />
+                    <Route path="almacenes/modelos" element={<ModelosPage />} />
 
                 </Route>
 
