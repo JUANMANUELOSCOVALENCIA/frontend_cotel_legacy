@@ -1,4 +1,4 @@
-// src/core/almacenes/pages/modelos/ModeloDialog.jsx - VERSIÓN FINAL CORREGIDA
+// src/core/almacenes/pages/modelos/ModeloDialog.jsx - VERSIÓN SIMPLIFICADA
 import React, { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -51,43 +51,23 @@ const ModeloDialog = ({
 
     const watchTipoMaterial = watch('tipo_material');
 
-    // ✅ VALIDACIONES SEGURAS PARA OPCIONES
+    // Validaciones seguras para opciones
     const getMarcasSeguras = () => {
-        return opciones?.marcas?.filter(marca =>
-            marca &&
-            marca.id !== null &&
-            marca.id !== undefined &&
-            marca.nombre &&
-            marca.activo
-        ) || [];
+        return opciones?.marcas?.filter(marca => marca?.id && marca?.nombre && marca?.activo) || [];
     };
 
     const getUnidadesMedidaSeguras = () => {
-        return opciones?.unidades_medida?.filter(unidad =>
-            unidad &&
-            unidad.id !== null &&
-            unidad.id !== undefined &&
-            unidad.nombre &&
-            unidad.activo
-        ) || [];
+        return opciones?.unidades_medida?.filter(unidad => unidad?.id && unidad?.nombre && unidad?.activo) || [];
     };
 
     const getTiposMaterialSeguras = () => {
-        return opciones?.tipos_material?.filter(tipo =>
-            tipo &&
-            tipo.id !== null &&
-            tipo.id !== undefined &&
-            tipo.nombre
-        ) || [];
+        return opciones?.tipos_material?.filter(tipo => tipo?.id && tipo?.nombre) || [];
     };
 
-    // Filtrar tipos de material para ONUs
     const tiposMaterialONU = getTiposMaterialSeguras().filter(tipo => tipo.es_unico === true);
-
-    // Filtrar tipos de material para materiales generales
     const tiposMaterialGeneral = getTiposMaterialSeguras().filter(tipo => tipo.es_unico === false);
 
-    // Resetear form cuando se abre/cierra o cambian los datos iniciales
+    // Reset form
     useEffect(() => {
         if (open) {
             if (mode === 'edit' && initialData) {
@@ -120,51 +100,24 @@ const ModeloDialog = ({
         setError(null);
 
         try {
-            console.log('🔍 Datos RAW del formulario:', data);
-
-            // ✅ CAMBIO CRÍTICO: El backend espera 'tipo_equipo', no 'tipo_material'
-            const cleanModeloData = {
-                nombre: String(data.nombre || '').trim(),
-                codigo_modelo: String(data.codigo_modelo || '').trim(),
-                marca: Number(data.marca),
-                tipo_equipo: Number(data.tipo_material), // ✅ CAMBIO AQUÍ: usar tipo_equipo
-                unidad_medida: Number(data.unidad_medida),
+            // ✅ LIMPIEZA ESTRICTA - SOLO LOS CAMPOS NECESARIOS
+            const modeloData = {
+                nombre: data.nombre.trim(),
+                codigo_modelo: data.codigo_modelo.trim(),
+                marca: parseInt(data.marca),
+                tipo_material: parseInt(data.tipo_material), // ✅ SOLO tipo_material
+                unidad_medida: parseInt(data.unidad_medida),
                 requiere_inspeccion_inicial: Boolean(data.requiere_inspeccion_inicial),
-                descripcion: String(data.descripcion || '').trim()
+                descripcion: data.descripcion.trim()
             };
 
-            // ✅ VALIDACIONES ROBUSTAS
-            if (!cleanModeloData.nombre) {
-                throw new Error('El nombre es obligatorio');
-            }
-            if (!cleanModeloData.codigo_modelo) {
-                throw new Error('El código del modelo es obligatorio');
-            }
-            if (isNaN(cleanModeloData.marca) || cleanModeloData.marca <= 0) {
-                throw new Error('Selecciona una marca válida');
-            }
-            if (isNaN(cleanModeloData.tipo_equipo) || cleanModeloData.tipo_equipo <= 0) {
-                throw new Error('Selecciona un tipo de material válido');
-            }
-            if (isNaN(cleanModeloData.unidad_medida) || cleanModeloData.unidad_medida <= 0) {
-                throw new Error('Selecciona una unidad de medida válida');
-            }
+            console.log('📤 Enviando datos limpios:', modeloData);
 
-            console.log('📤 Datos LIMPIOS a enviar al backend:', cleanModeloData);
-            console.log('🔍 Tipos de datos:');
-            Object.entries(cleanModeloData).forEach(([key, value]) => {
-                console.log(`  ${key}: ${typeof value} = ${value}`);
-            });
-
-            const result = await onSubmit(cleanModeloData);
-
-            console.log('📡 Respuesta del backend:', result);
-
+            const result = await onSubmit(modeloData);
             if (!result.success) {
                 setError(result.error);
             }
         } catch (err) {
-            console.error('❌ Error en handleFormSubmit:', err);
             setError(err.message || 'Error inesperado al guardar');
         } finally {
             setSubmitting(false);
@@ -208,20 +161,13 @@ const ModeloDialog = ({
 
                     {/* Información Básica */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Nombre */}
                         <div>
                             <Input
                                 label="Nombre del Modelo *"
                                 {...register('nombre', {
                                     required: 'El nombre es obligatorio',
-                                    minLength: {
-                                        value: 2,
-                                        message: 'Mínimo 2 caracteres'
-                                    },
-                                    maxLength: {
-                                        value: 100,
-                                        message: 'Máximo 100 caracteres'
-                                    }
+                                    minLength: { value: 2, message: 'Mínimo 2 caracteres' },
+                                    maxLength: { value: 100, message: 'Máximo 100 caracteres' }
                                 })}
                                 error={!!errors.nombre}
                                 disabled={submitting}
@@ -233,20 +179,13 @@ const ModeloDialog = ({
                             )}
                         </div>
 
-                        {/* Código */}
                         <div>
                             <Input
                                 label="Código del Modelo *"
                                 {...register('codigo_modelo', {
                                     required: 'El código es obligatorio',
-                                    minLength: {
-                                        value: 2,
-                                        message: 'Mínimo 2 caracteres'
-                                    },
-                                    maxLength: {
-                                        value: 20,
-                                        message: 'Máximo 20 caracteres'
-                                    }
+                                    minLength: { value: 2, message: 'Mínimo 2 caracteres' },
+                                    maxLength: { value: 20, message: 'Máximo 20 caracteres' }
                                 })}
                                 error={!!errors.codigo_modelo}
                                 disabled={submitting}
@@ -259,9 +198,9 @@ const ModeloDialog = ({
                         </div>
                     </div>
 
-                    {/* Relaciones */}
+                    {/* Selects */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* ✅ MARCA - CON DESIGN ORIGINAL PERO CORREGIDO */}
+                        {/* Marca */}
                         <div>
                             <Controller
                                 name="marca"
@@ -271,10 +210,7 @@ const ModeloDialog = ({
                                     <Select
                                         label="Marca *"
                                         value={field.value}
-                                        onChange={(value) => {
-                                            console.log('Marca seleccionada:', value);
-                                            field.onChange(value);
-                                        }}
+                                        onChange={field.onChange}
                                         error={!!errors.marca}
                                         disabled={submitting || loadingOpciones}
                                     >
@@ -293,7 +229,7 @@ const ModeloDialog = ({
                             )}
                         </div>
 
-                        {/* ✅ TIPO DE MATERIAL - CON DESIGN ORIGINAL PERO CORREGIDO */}
+                        {/* Tipo de Material */}
                         <div>
                             <Controller
                                 name="tipo_material"
@@ -303,14 +239,11 @@ const ModeloDialog = ({
                                     <Select
                                         label="Tipo de Material *"
                                         value={field.value}
-                                        onChange={(value) => {
-                                            console.log('Tipo material seleccionado:', value);
-                                            field.onChange(value);
-                                        }}
+                                        onChange={field.onChange}
                                         error={!!errors.tipo_material}
                                         disabled={submitting || loadingOpciones}
                                     >
-                                        {/* Tipos para ONUs */}
+                                        {/* ONUs */}
                                         {tiposMaterialONU.length > 0 && (
                                             <>
                                                 <Option value="" disabled className="font-semibold text-blue-600">
@@ -324,7 +257,7 @@ const ModeloDialog = ({
                                             </>
                                         )}
 
-                                        {/* Tipos para materiales generales */}
+                                        {/* Materiales generales */}
                                         {tiposMaterialGeneral.length > 0 && (
                                             <>
                                                 <Option value="" disabled className="font-semibold text-green-600">
@@ -348,7 +281,7 @@ const ModeloDialog = ({
                         </div>
                     </div>
 
-                    {/* ✅ UNIDAD DE MEDIDA - CON DESIGN ORIGINAL PERO CORREGIDO */}
+                    {/* Unidad de Medida */}
                     <div>
                         <Controller
                             name="unidad_medida"
@@ -358,10 +291,7 @@ const ModeloDialog = ({
                                 <Select
                                     label="Unidad de Medida *"
                                     value={field.value}
-                                    onChange={(value) => {
-                                        console.log('Unidad medida seleccionada:', value);
-                                        field.onChange(value);
-                                    }}
+                                    onChange={field.onChange}
                                     error={!!errors.unidad_medida}
                                     disabled={submitting || loadingOpciones}
                                 >
@@ -385,10 +315,7 @@ const ModeloDialog = ({
                         <Textarea
                             label="Descripción"
                             {...register('descripcion', {
-                                maxLength: {
-                                    value: 255,
-                                    message: 'Máximo 255 caracteres'
-                                }
+                                maxLength: { value: 255, message: 'Máximo 255 caracteres' }
                             })}
                             error={!!errors.descripcion}
                             disabled={submitting}
@@ -401,7 +328,7 @@ const ModeloDialog = ({
                         )}
                     </div>
 
-                    {/* Configuración */}
+                    {/* Switch */}
                     <div className="p-4 bg-blue-gray-50 rounded-lg">
                         <div className="flex items-center justify-between">
                             <div>
@@ -427,7 +354,7 @@ const ModeloDialog = ({
                         </div>
                     </div>
 
-                    {/* Alertas informativas */}
+                    {/* Alert informativo */}
                     {watchTipoMaterial && !loadingOpciones && (
                         <Alert color="blue">
                             <Typography variant="small">

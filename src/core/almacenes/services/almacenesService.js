@@ -1,5 +1,6 @@
 import { api } from '../../../services/api';
 import { ENDPOINTS, buildQuery } from '../../../services/endpoints';
+import { getToken } from '../../../utils/storage';
 
 class AlmacenesService {
     // ========== OPCIONES COMPLETAS ==========
@@ -419,71 +420,104 @@ class AlmacenesService {
         }
     }
 
-    // src/core/almacenes/services/almacenesService.js - CORRECCIÓN EN createModelo
+    // src/core/almacenes/services/almacenesService.js - DEBUG COMPLETO
+    // src/core/almacenes/services/almacenesService.js - CORRECCIÓN FINAL
     async createModelo(modeloData) {
         try {
-            console.log('🚀 almacenesService.createModelo - Datos recibidos:', modeloData);
+            const baseURL = import.meta.env.VITE_API_URL;
+            const token = getToken(); // Usa tu función para obtener el token
 
-            // ✅ LIMPIAR DATOS COMPLETAMENTE
-            const cleanData = {
-                nombre: String(modeloData.nombre || '').trim(),
-                codigo_modelo: String(modeloData.codigo_modelo || '').trim(),
-                marca: Number(modeloData.marca),
-                tipo_material: Number(modeloData.tipo_material), // ✅ SOLO tipo_material
-                unidad_medida: Number(modeloData.unidad_medida),
-                requiere_inspeccion_inicial: Boolean(modeloData.requiere_inspeccion_inicial),
-                descripcion: String(modeloData.descripcion || '').trim()
+            // ✅ EL BACKEND ESPERA 'tipo_material', NO 'tipo_equipo'
+            const payload = {
+                nombre: modeloData.nombre,
+                codigo_modelo: modeloData.codigo_modelo,
+                marca: modeloData.marca,
+                tipo_material: modeloData.tipo_material, // ✅ CORREGIR: usar tipo_material
+                unidad_medida: modeloData.unidad_medida,
+                requiere_inspeccion_inicial: modeloData.requiere_inspeccion_inicial,
+                descripcion: modeloData.descripcion
             };
 
-            // ✅ VERIFICAR QUE NO HAY VALORES NaN
-            if (isNaN(cleanData.marca)) {
-                throw new Error('Marca inválida');
-            }
-            if (isNaN(cleanData.tipo_material)) {
-                throw new Error('Tipo de material inválido');
-            }
-            if (isNaN(cleanData.unidad_medida)) {
-                throw new Error('Unidad de medida inválida');
-            }
+            console.log('📤 FETCH - Enviando payload correcto:', JSON.stringify(payload));
 
-            console.log('📤 Enviando POST a:', ENDPOINTS.MODELOS);
-            console.log('📤 Datos finales:', JSON.stringify(cleanData, null, 2));
-            console.log('🔍 Verificación de tipos:');
-            Object.entries(cleanData).forEach(([key, value]) => {
-                console.log(`  ${key}: ${typeof value} = ${value}`);
+            const response = await fetch(`${baseURL}/almacenes/modelos/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
             });
 
-            const response = await api.post(ENDPOINTS.MODELOS, cleanData);
+            console.log('📡 FETCH - Status:', response.status);
 
-            console.log('✅ Respuesta exitosa del backend:', response.data);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ FETCH - Error response:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('✅ FETCH - Success:', data);
 
             return {
                 success: true,
-                data: response.data
+                data: data
             };
         } catch (error) {
-            console.error('❌ Error en createModelo:', error);
-            console.error('❌ Error response:', error.response?.data);
-            console.error('❌ Error status:', error.response?.status);
-
+            console.error('❌ FETCH - Error:', error);
             return {
                 success: false,
-                error: error.response?.data?.message || error.message || 'Error al crear modelo'
+                error: error.message || 'Error al crear modelo'
             };
         }
     }
 
+    // src/core/almacenes/services/almacenesService.js - updateModelo CORREGIDO
+    // src/core/almacenes/services/almacenesService.js - updateModelo corregido
     async updateModelo(id, modeloData) {
         try {
-            const response = await api.put(ENDPOINTS.MODELO_DETAIL(id), modeloData);
+            const baseURL = import.meta.env.VITE_API_URL;
+            const token = getToken();
+
+            // ✅ EL BACKEND ESPERA 'tipo_material', NO 'tipo_equipo'
+            const payload = {
+                nombre: modeloData.nombre,
+                codigo_modelo: modeloData.codigo_modelo,
+                marca: modeloData.marca,
+                tipo_material: modeloData.tipo_material, // ✅ CORREGIR: usar tipo_material
+                unidad_medida: modeloData.unidad_medida,
+                requiere_inspeccion_inicial: modeloData.requiere_inspeccion_inicial,
+                descripcion: modeloData.descripcion
+            };
+
+            console.log('📤 UPDATE - Enviando payload:', JSON.stringify(payload));
+
+            const response = await fetch(`${baseURL}/almacenes/modelos/${id}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ UPDATE - Error response:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
             return {
                 success: true,
-                data: response.data
+                data: data
             };
         } catch (error) {
+            console.error('❌ UPDATE - Error:', error);
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al actualizar modelo'
+                error: error.message || 'Error al actualizar modelo'
             };
         }
     }
