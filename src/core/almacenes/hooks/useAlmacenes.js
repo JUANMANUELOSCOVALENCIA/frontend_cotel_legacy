@@ -573,6 +573,7 @@ export const useTiposEquipo = () => {
 // ========== HOOKS ANTERIORES (Opciones, Lotes, Importación) ==========
 // [Los hooks anteriores se mantienen igual...]
 
+// En useAlmacenes.js - verificar este hook:
 export const useOpcionesCompletas = () => {
     const [opciones, setOpciones] = useState({});
     const [loading, setLoading] = useState(false);
@@ -584,17 +585,16 @@ export const useOpcionesCompletas = () => {
 
         try {
             const result = await almacenesService.getOpcionesCompletas();
-            console.log('🔍 RESULTADO DE getOpcionesCompletas:', result);
+            console.log('🔍 RESULTADO opciones:', result); // DEBUGGING
 
             if (result.success) {
-                console.log('🔍 DATOS RECIBIDOS:', result.data);
-                console.log('🔍 LOTES EN DATOS:', result.data.lotes);
+                console.log('🔍 TIPOS SERVICIO:', result.data.tipos_servicio); // DEBUGGING
                 setOpciones(result.data);
             } else {
                 setError(result.error);
             }
         } catch (err) {
-            console.error('❌ ERROR:', err);
+            console.error('❌ ERROR cargando opciones:', err);
             setError('Error al cargar opciones');
         } finally {
             setLoading(false);

@@ -141,9 +141,11 @@ const LoteDialogs = ({
     }, [dialogs.edit, selectedLote, setValue]);
 
     // ========== HANDLERS ==========
+    // En loteDialogs.jsx - handleCreateLote CORREGIDO:
     const handleCreateLote = async (data) => {
-        console.log('🔍 Datos del formulario RAW:', data);
+        console.log('🔍 Datos del formulario:', data);
 
+        // VALIDAR detalles
         if (!data.detalles || data.detalles.length === 0) {
             toast.error('Debe agregar al menos un modelo al lote');
             return;
@@ -155,10 +157,11 @@ const LoteDialogs = ({
             return;
         }
 
+        // ESTRUCTURA EXACTA que espera el backend:
         const loteData = {
             numero_lote: data.numero_lote,
             tipo_ingreso: parseInt(data.tipo_ingreso),
-            tipo_servicio: parseInt(data.tipo_servicio),
+            tipo_servicio: parseInt(data.tipo_servicio), // ✅ Este campo existe
             proveedor: parseInt(data.proveedor),
             almacen_destino: parseInt(data.almacen_destino),
             codigo_requerimiento_compra: data.codigo_requerimiento_compra,
@@ -166,7 +169,8 @@ const LoteDialogs = ({
             fecha_recepcion: data.fecha_recepcion,
             fecha_inicio_garantia: data.fecha_inicio_garantia,
             fecha_fin_garantia: data.fecha_fin_garantia,
-            observaciones: data.observaciones,
+            observaciones: data.observaciones || '',
+            // ✅ ESTRUCTURA EXACTA que espera LoteCreateSerializer:
             detalles: detallesValidos.map(detalle => ({
                 modelo: parseInt(detalle.modelo),
                 cantidad: parseInt(detalle.cantidad)
@@ -347,11 +351,15 @@ const LoteDialogs = ({
                                         onChange={(value) => field.onChange(value)}
                                         error={!!errors.tipo_servicio}
                                     >
-                                        {opciones.tipos_servicio?.map((tipo) => (
-                                            <Option key={tipo.id} value={tipo.id.toString()}>
-                                                {tipo.nombre}
-                                            </Option>
-                                        ))}
+                                        {opciones.tipos_servicio?.length > 0 ? (
+                                            opciones.tipos_servicio.map((tipo) => (
+                                                <Option key={tipo.id} value={tipo.id.toString()}>
+                                                    {tipo.nombre}
+                                                </Option>
+                                            ))
+                                        ) : (
+                                            <Option value="" disabled>No hay tipos disponibles</Option>
+                                        )}
                                     </Select>
                                 )}
                             />

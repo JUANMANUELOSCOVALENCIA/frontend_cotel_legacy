@@ -9,7 +9,7 @@ class AlmacenesService {
             const response = await api.get(ENDPOINTS.OPCIONES_COMPLETAS);
             return {
                 success: true,
-                data: response.data.data
+                data: response.data.data || response.data
             };
         } catch (error) {
             console.error('Error al obtener opciones completas:', error);
