@@ -109,11 +109,11 @@ const LoteDialogs = ({
         reset,
         control,
         setValue,
-        watch
+        watch,
+        getValues,
+        clearErrors
     } = useForm({
-        defaultValues: {
-            detalles: [{ modelo: '', cantidad: 1 }]
-        }
+        defaultValues: {} // ✅ INICIALIZAR COMPLETAMENTE VACÍO
     });
 
     // Manejo de array de detalles
@@ -126,24 +126,53 @@ const LoteDialogs = ({
 
     // Efecto para llenar formulario al editar
     useEffect(() => {
-        if (dialogs.edit && selectedLote) {
-            setValue('numero_lote', selectedLote.numero_lote || '');
-            setValue('tipo_ingreso', selectedLote.tipo_ingreso || '');
-            setValue('proveedor', selectedLote.proveedor || '');
-            setValue('almacen_destino', selectedLote.almacen_destino || '');
-            setValue('codigo_requerimiento_compra', selectedLote.codigo_requerimiento_compra || '');
-            setValue('codigo_nota_ingreso', selectedLote.codigo_nota_ingreso || '');
-            setValue('fecha_recepcion', selectedLote.fecha_recepcion || '');
-            setValue('fecha_inicio_garantia', selectedLote.fecha_inicio_garantia || '');
-            setValue('fecha_fin_garantia', selectedLote.fecha_fin_garantia || '');
-            setValue('observaciones', selectedLote.observaciones || '');
+        console.log('🔄 useEffect ejecutado - dialogs:', dialogs);
+
+        if (dialogs.create) {
+            console.log('🆕 Modo CREAR - Inicializando con detalles');
+            reset({
+                numero_lote: '',
+                tipo_ingreso: '',
+                proveedor: '',
+                almacen_destino: '',
+                tipo_servicio: '',
+                codigo_requerimiento_compra: '',
+                codigo_nota_ingreso: '',
+                fecha_recepcion: '',
+                fecha_inicio_garantia: '',
+                fecha_fin_garantia: '',
+                observaciones: '',
+                detalles: [{ modelo: '', cantidad: 1 }] // ✅ Solo en creación
+            });
+        } else if (dialogs.edit && selectedLote) {
+            console.log('✏️ Modo EDITAR - Sin detalles');
+            reset({
+                numero_lote: selectedLote.numero_lote || '',
+                tipo_ingreso: selectedLote.tipo_ingreso?.toString() || selectedLote.tipo_ingreso_info?.id?.toString() || '',
+                proveedor: selectedLote.proveedor?.toString() || selectedLote.proveedor_info?.id?.toString() || '',
+                almacen_destino: selectedLote.almacen_destino?.toString() || selectedLote.almacen_destino_info?.id?.toString() || '',
+                tipo_servicio: selectedLote.tipo_servicio?.toString() || selectedLote.tipo_servicio_info?.id?.toString() || '',
+                codigo_requerimiento_compra: selectedLote.codigo_requerimiento_compra || '',
+                codigo_nota_ingreso: selectedLote.codigo_nota_ingreso || '',
+                fecha_recepcion: selectedLote.fecha_recepcion || '',
+                fecha_inicio_garantia: selectedLote.fecha_inicio_garantia || '',
+                fecha_fin_garantia: selectedLote.fecha_fin_garantia || '',
+                observaciones: selectedLote.observaciones || ''
+                // ✅ NO detalles aquí
+            });
+
+            // ✅ LIMPIAR explícitamente cualquier error de detalles
+            setTimeout(() => {
+                clearErrors('detalles');
+                console.log('🧹 Errores de detalles limpiados para edición');
+            }, 100);
         }
-    }, [dialogs.edit, selectedLote, setValue]);
+    }, [dialogs.create, dialogs.edit, selectedLote, reset, clearErrors]);
 
     // ========== HANDLERS ==========
-    // En loteDialogs.jsx - handleCreateLote CORREGIDO:
+    // En loteDialogs.jsx - función handleCreateLote
     const handleCreateLote = async (data) => {
-        console.log('🔍 Datos del formulario:', data);
+        console.log('🔍 Datos del formulario RAW:', data);
 
         // VALIDAR detalles
         if (!data.detalles || data.detalles.length === 0) {
@@ -152,58 +181,133 @@ const LoteDialogs = ({
         }
 
         const detallesValidos = data.detalles.filter(d => d.modelo && d.cantidad > 0);
+        console.log('🔍 Detalles válidos:', detallesValidos);
+
         if (detallesValidos.length !== data.detalles.length) {
             toast.error('Todos los detalles deben tener modelo y cantidad válida');
             return;
         }
 
-        // ESTRUCTURA EXACTA que espera el backend:
+        // VERIFICAR que todos los parseInt no devuelvan NaN
+        console.log('🔍 Verificando campos numéricos:');
+        console.log('tipo_ingreso:', data.tipo_ingreso, '→ parseInt:', parseInt(data.tipo_ingreso));
+        console.log('tipo_servicio:', data.tipo_servicio, '→ parseInt:', parseInt(data.tipo_servicio));
+        console.log('proveedor:', data.proveedor, '→ parseInt:', parseInt(data.proveedor));
+        console.log('almacen_destino:', data.almacen_destino, '→ parseInt:', parseInt(data.almacen_destino));
+
+        // Verificar que ninguno sea NaN
+        if (isNaN(parseInt(data.tipo_ingreso)) ||
+            isNaN(parseInt(data.tipo_servicio)) ||
+            isNaN(parseInt(data.proveedor)) ||
+            isNaN(parseInt(data.almacen_destino))) {
+            toast.error('Error en campos numéricos - valores inválidos');
+            console.error('❌ Algunos campos devolvieron NaN');
+            return;
+        }
+
+        // ESTRUCTURA EXACTA
         const loteData = {
-            numero_lote: data.numero_lote,
+            numero_lote: data.numero_lote?.trim(),
             tipo_ingreso: parseInt(data.tipo_ingreso),
-            tipo_servicio: parseInt(data.tipo_servicio), // ✅ Este campo existe
+            tipo_servicio: parseInt(data.tipo_servicio),
             proveedor: parseInt(data.proveedor),
             almacen_destino: parseInt(data.almacen_destino),
-            codigo_requerimiento_compra: data.codigo_requerimiento_compra,
-            codigo_nota_ingreso: data.codigo_nota_ingreso,
+            codigo_requerimiento_compra: data.codigo_requerimiento_compra?.trim(),
+            codigo_nota_ingreso: data.codigo_nota_ingreso?.trim(),
             fecha_recepcion: data.fecha_recepcion,
             fecha_inicio_garantia: data.fecha_inicio_garantia,
             fecha_fin_garantia: data.fecha_fin_garantia,
-            observaciones: data.observaciones || '',
-            // ✅ ESTRUCTURA EXACTA que espera LoteCreateSerializer:
+            observaciones: data.observaciones?.trim() || '',
             detalles: detallesValidos.map(detalle => ({
                 modelo: parseInt(detalle.modelo),
                 cantidad: parseInt(detalle.cantidad)
             }))
         };
 
-        console.log('📤 Datos enviados al backend:', loteData);
+        console.log('📤 Datos FINALES enviados al backend:', JSON.stringify(loteData, null, 2));
 
         const result = await createLote(loteData);
+        console.log('📥 Respuesta del backend:', result);
+
         if (result.success) {
             toast.success('Lote creado correctamente');
             reset();
             onSuccess('create');
         } else {
+            console.error('❌ Error del backend:', result.error);
             toast.error(result.error);
         }
     };
 
+    // En loteDialogs.jsx - REEMPLAZA la función handleEditLote completa:
+    // En loteDialogs.jsx - REEMPLAZA handleEditLote:
     const handleEditLote = async (data) => {
-        const result = await updateLote(selectedLote.id, data);
-        if (result.success) {
-            toast.success('Lote actualizado correctamente');
-            reset();
-            onSuccess('edit');
-        } else {
-            toast.error(result.error);
+        console.log('🔍 EDIT - Datos del formulario completo:', data);
+
+        // Verificar campos numéricos
+        const numericFields = ['tipo_ingreso', 'tipo_servicio', 'proveedor', 'almacen_destino'];
+        for (const field of numericFields) {
+            if (data[field] && isNaN(parseInt(data[field]))) {
+                toast.error(`Error en el campo ${field}: valor inválido`);
+                console.error(`❌ Campo ${field} no es numérico:`, data[field]);
+                return;
+            }
+        }
+
+        // Estructura completa para edición
+        const loteData = {
+            numero_lote: data.numero_lote?.trim(),
+            tipo_ingreso: parseInt(data.tipo_ingreso),
+            tipo_servicio: parseInt(data.tipo_servicio),
+            proveedor: parseInt(data.proveedor),
+            almacen_destino: parseInt(data.almacen_destino),
+            codigo_requerimiento_compra: data.codigo_requerimiento_compra?.trim(),
+            codigo_nota_ingreso: data.codigo_nota_ingreso?.trim(),
+            fecha_recepcion: data.fecha_recepcion,
+            fecha_inicio_garantia: data.fecha_inicio_garantia,
+            fecha_fin_garantia: data.fecha_fin_garantia,
+            observaciones: data.observaciones?.trim() || ''
+            // ✅ NO incluir detalles en la edición
+        };
+
+        console.log('📤 EDIT - Datos FINALES enviados:', JSON.stringify(loteData, null, 2));
+
+        try {
+            const result = await updateLote(selectedLote.id, loteData);
+            console.log('📥 EDIT - Respuesta del backend:', result);
+
+            if (result.success) {
+                toast.success('Lote actualizado correctamente');
+                reset();
+                onSuccess('edit');
+            } else {
+                console.error('❌ EDIT - Error del backend:', result.error);
+                toast.error(result.error);
+            }
+        } catch (error) {
+            console.error('❌ EDIT - Exception:', error);
+            toast.error('Error al actualizar lote');
         }
     };
 
     const handleConfirmAction = async () => {
+        console.log('🚨 CONFIRMAR ACCIÓN - Ejecutando:', confirmAction);
+
         if (confirmAction) {
-            await onLoteAction(confirmAction.action, confirmAction.lote);
-            onSuccess('confirm');
+            console.log('🚨 CONFIRMAR - Llamando onLoteAction con:', {
+                action: confirmAction.action,
+                lote: confirmAction.lote
+            });
+
+            try {
+                await onLoteAction(confirmAction.action, confirmAction.lote);
+                console.log('✅ CONFIRMAR - onLoteAction completada');
+                onSuccess('confirm');
+            } catch (error) {
+                console.error('❌ CONFIRMAR - Error en onLoteAction:', error);
+            }
+        } else {
+            console.warn('⚠️ CONFIRMAR - No hay confirmAction definida');
         }
     };
 
@@ -576,15 +680,16 @@ const LoteDialogs = ({
     );
 
     // ========== EDITAR LOTE DIALOG ==========
+    // En loteDialogs.jsx - REEMPLAZA completamente el EditLoteDialog:
     const EditLoteDialog = () => (
         <Modal
             open={dialogs.edit}
             onClose={() => onCloseDialog('edit')}
-            size="lg"
+            size="xl" // ✅ Cambiar a xl para más espacio
         >
             <DialogHeader className="flex items-center justify-between">
                 <Typography variant="h5" color="blue-gray">
-                    Editar Lote
+                    Editar Lote: {selectedLote?.numero_lote}
                 </Typography>
                 <IconButton
                     variant="text"
@@ -598,38 +703,223 @@ const LoteDialogs = ({
                 </IconButton>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit(handleEditLote)}>
-                <DialogBody divider className="space-y-4 max-h-[70vh] overflow-y-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                            label="Número de Lote *"
-                            {...register('numero_lote', {
-                                required: 'El número de lote es obligatorio'
-                            })}
-                            error={!!errors.numero_lote}
+            <form onSubmit={handleSubmit(
+                (data) => {
+                    console.log('✅ FORM VÁLIDO - Enviando:', data);
+                    handleEditLote(data);
+                },
+                (errors) => {
+                    console.error('❌ ERRORES DE VALIDACIÓN:', errors);
+                    toast.error('Hay errores en el formulario');
+                }
+            )}>
+                <DialogBody divider className="space-y-6 max-h-[70vh] overflow-y-auto">
+                    {/* Información Básica */}
+                    <div>
+                        <Typography variant="h6" color="blue-gray" className="mb-3">
+                            📋 Información Básica
+                        </Typography>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input
+                                label="Número de Lote *"
+                                {...register('numero_lote', {
+                                    required: 'El número de lote es obligatorio',
+                                    minLength: { value: 3, message: 'Mínimo 3 caracteres' }
+                                })}
+                                error={!!errors.numero_lote}
+                            />
+
+                            <Controller
+                                name="tipo_ingreso"
+                                control={control}
+                                rules={{ required: 'El tipo de ingreso es obligatorio' }}
+                                render={({ field }) => (
+                                    <Select
+                                        label="Tipo de Ingreso *"
+                                        value={field.value?.toString() || ''}
+                                        onChange={(value) => field.onChange(value)}
+                                        error={!!errors.tipo_ingreso}
+                                    >
+                                        {opciones?.tipos_ingreso?.length > 0 ? (
+                                            opciones.tipos_ingreso.map((tipo) => (
+                                                <Option key={tipo.id} value={tipo.id.toString()}>
+                                                    {tipo.nombre}
+                                                </Option>
+                                            ))
+                                        ) : (
+                                            <Option value="" disabled>No hay tipos disponibles</Option>
+                                        )}
+                                    </Select>
+                                )}
+                            />
+
+                            <Controller
+                                name="proveedor"
+                                control={control}
+                                rules={{ required: 'El proveedor es obligatorio' }}
+                                render={({ field }) => (
+                                    <Select
+                                        label="Proveedor *"
+                                        value={field.value?.toString() || ''}
+                                        onChange={(value) => field.onChange(value)}
+                                        error={!!errors.proveedor}
+                                    >
+                                        {opciones?.proveedores?.length > 0 ? (
+                                            opciones.proveedores.map((proveedor) => (
+                                                <Option key={proveedor.id} value={proveedor.id.toString()}>
+                                                    {proveedor.nombre_comercial}
+                                                </Option>
+                                            ))
+                                        ) : (
+                                            <Option value="" disabled>No hay proveedores disponibles</Option>
+                                        )}
+                                    </Select>
+                                )}
+                            />
+
+                            <Controller
+                                name="almacen_destino"
+                                control={control}
+                                rules={{ required: 'El almacén destino es obligatorio' }}
+                                render={({ field }) => (
+                                    <Select
+                                        label="Almacén Destino *"
+                                        value={field.value?.toString() || ''}
+                                        onChange={(value) => field.onChange(value)}
+                                        error={!!errors.almacen_destino}
+                                    >
+                                        {opciones?.almacenes?.length > 0 ? (
+                                            opciones.almacenes.map((almacen) => (
+                                                <Option key={almacen.id} value={almacen.id.toString()}>
+                                                    {almacen.nombre} ({almacen.codigo})
+                                                </Option>
+                                            ))
+                                        ) : (
+                                            <Option value="" disabled>No hay almacenes disponibles</Option>
+                                        )}
+                                    </Select>
+                                )}
+                            />
+
+                            <Controller
+                                name="tipo_servicio"
+                                control={control}
+                                rules={{ required: 'El tipo de servicio es obligatorio' }}
+                                render={({ field }) => (
+                                    <Select
+                                        label="Tipo de Servicio *"
+                                        value={field.value?.toString() || ''}
+                                        onChange={(value) => field.onChange(value)}
+                                        error={!!errors.tipo_servicio}
+                                    >
+                                        {opciones.tipos_servicio?.length > 0 ? (
+                                            opciones.tipos_servicio.map((tipo) => (
+                                                <Option key={tipo.id} value={tipo.id.toString()}>
+                                                    {tipo.nombre}
+                                                </Option>
+                                            ))
+                                        ) : (
+                                            <Option value="" disabled>No hay tipos disponibles</Option>
+                                        )}
+                                    </Select>
+                                )}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Códigos de Referencia */}
+                    <div>
+                        <Typography variant="h6" color="blue-gray" className="mb-3">
+                            🏢 Códigos de Empresa
+                        </Typography>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input
+                                label="Código Requerimiento Compra *"
+                                {...register('codigo_requerimiento_compra', {
+                                    required: 'El código de requerimiento es obligatorio',
+                                    pattern: {
+                                        value: /^\d{6,10}$/,
+                                        message: 'Debe tener entre 6 y 10 dígitos numéricos'
+                                    }
+                                })}
+                                error={!!errors.codigo_requerimiento_compra}
+                            />
+
+                            <Input
+                                label="Código Nota Ingreso *"
+                                {...register('codigo_nota_ingreso', {
+                                    required: 'El código de nota de ingreso es obligatorio',
+                                    pattern: {
+                                        value: /^\d{6,10}$/,
+                                        message: 'Debe tener entre 6 y 10 dígitos numéricos'
+                                    }
+                                })}
+                                error={!!errors.codigo_nota_ingreso}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Fechas */}
+                    <div>
+                        <Typography variant="h6" color="blue-gray" className="mb-3">
+                            📅 Fechas
+                        </Typography>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Input
+                                type="date"
+                                label="Fecha Recepción *"
+                                {...register('fecha_recepcion', {
+                                    required: 'La fecha de recepción es obligatoria'
+                                })}
+                                error={!!errors.fecha_recepcion}
+                            />
+
+                            <Input
+                                type="date"
+                                label="Inicio Garantía"
+                                {...register('fecha_inicio_garantia')}
+                                error={!!errors.fecha_inicio_garantia}
+                            />
+
+                            <Input
+                                type="date"
+                                label="Fin Garantía"
+                                {...register('fecha_fin_garantia')}
+                                error={!!errors.fecha_fin_garantia}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Observaciones */}
+                    <div>
+                        <Textarea
+                            label="Observaciones"
+                            {...register('observaciones')}
+                            rows={3}
                         />
                     </div>
 
-                    <Textarea
-                        label="Observaciones"
-                        {...register('observaciones')}
-                        rows={3}
-                    />
-
+                    {/* Información del estado actual */}
                     {selectedLote && (
                         <Alert color="blue" className="mt-4">
                             <Typography variant="small">
-                                Estado actual: <strong>{selectedLote.estado_info?.nombre}</strong>
+                                <strong>Estado actual:</strong> {selectedLote.estado_info?.nombre}
                                 <br />
-                                Progreso: {selectedLote.cantidad_recibida || 0}/{selectedLote.cantidad_total || 0} materiales
+                                <strong>Progreso:</strong> {selectedLote.cantidad_recibida || 0}/{selectedLote.cantidad_total || 0} materiales
+                                <br />
+                                <strong>Detalles:</strong> Los modelos y cantidades no se pueden editar una vez creado el lote
                             </Typography>
                         </Alert>
                     )}
 
+                    {/* Errores */}
                     {Object.keys(errors).length > 0 && (
                         <Alert color="red">
+                            <Typography variant="small" className="font-medium mb-2">
+                                Errores en el formulario:
+                            </Typography>
                             {Object.values(errors).map((error, index) => (
-                                <div key={index}>{error.message}</div>
+                                <div key={index}>• {error.message}</div>
                             ))}
                         </Alert>
                     )}
@@ -646,7 +936,17 @@ const LoteDialogs = ({
                     >
                         Cancelar
                     </Button>
-                    <Button type="submit" color="orange" loading={loading}>
+                    <Button
+                        type="submit"
+                        color="orange"
+                        loading={loading}
+                        onClick={() => {
+                            console.log('🚨 BOTÓN PRESIONADO - Verificando form');
+                            console.log('🚨 Errores actuales:', errors);
+                            console.log('🚨 Valores actuales:', getValues());
+                            console.log('🚨 Form válido:', Object.keys(errors).length === 0);
+                        }}
+                    >
                         Actualizar Lote
                     </Button>
                 </DialogFooter>

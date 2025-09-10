@@ -658,6 +658,50 @@ export const useLotes = () => {
         }
     }, [loadLotes]);
 
+    const deleteLote = useCallback(async (id) => {
+        console.log('🔥 HOOK DELETE - Eliminando lote ID:', id);
+        setLoading(true);
+        try {
+            const result = await almacenesService.deleteLote(id);
+            console.log('🔥 HOOK DELETE - Resultado del servicio:', result);
+
+            if (result.success) {
+                await loadLotes();
+                return { success: true, message: result.message };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error al eliminar lote';
+            console.error('🔥 HOOK DELETE - Exception:', err);
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, [loadLotes]);
+
+    const updateLote = useCallback(async (id, loteData) => {
+        setLoading(true);
+        try {
+            const result = await almacenesService.updateLote(id, loteData);
+            if (result.success) {
+                await loadLotes();
+                return { success: true, data: result.data };
+            } else {
+                setError(result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (err) {
+            const error = 'Error al actualizar lote';
+            setError(error);
+            return { success: false, error };
+        } finally {
+            setLoading(false);
+        }
+    }, [loadLotes]);
+
     const loadLoteDetail = useCallback(async (id) => {
         setLoading(true);
         try {
@@ -680,19 +724,21 @@ export const useLotes = () => {
 
     return {
         lotes,
-        loteActual,
-        loading,
-        error,
-        loadLotes,
-        createLote,
-        loadLoteDetail,
-        clearError: () => setError(null),
-        permissions: {
+            loteActual,
+            loading,
+            error,
+            loadLotes,
+            createLote,
+            updateLote,
+            deleteLote,
+            loadLoteDetail,
+            clearError: () => setError(null),
+            permissions: {
             canCreate: hasPermission('lotes', 'crear'),
-            canEdit: hasPermission('lotes', 'actualizar'),
-            canDelete: hasPermission('lotes', 'eliminar'),
-            canView: hasPermission('lotes', 'leer'),
-            canImport: hasPermission('lotes', 'leer')
+                canEdit: hasPermission('lotes', 'actualizar'),
+                canDelete: hasPermission('lotes', 'eliminar'),
+                canView: hasPermission('lotes', 'leer'),
+                canImport: hasPermission('lotes', 'leer')
         }
     };
 };

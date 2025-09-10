@@ -618,45 +618,118 @@ class AlmacenesService {
 
     async createLote(loteData) {
         try {
+            console.log('🌐 SERVICE: Enviando al backend:', JSON.stringify(loteData, null, 2));
+
             const response = await api.post(ENDPOINTS.LOTES, loteData);
+
+            console.log('✅ SERVICE: Respuesta exitosa:', response.data);
             return {
                 success: true,
                 data: response.data
             };
         } catch (error) {
+            console.error('❌ SERVICE: Error completo:', error);
+            console.error('❌ SERVICE: Error response:', error.response?.data);
+            console.error('❌ SERVICE: Error status:', error.response?.status);
+
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al crear lote'
+                error: error.response?.data?.message ||
+                    error.response?.data?.non_field_errors?.[0] ||
+                    JSON.stringify(error.response?.data) ||
+                    'Error al crear lote'
             };
         }
     }
 
+    // En almacenesService.js - REEMPLAZA updateLote completamente:
     async updateLote(id, loteData) {
         try {
-            const response = await api.put(ENDPOINTS.LOTE_DETAIL(id), loteData);
+            console.log('🚨 SERVICE UPDATE - ID:', id);
+            console.log('🚨 SERVICE UPDATE - Datos recibidos:', JSON.stringify(loteData, null, 2));
+
+            // ✅ LIMPIAR DATOS: Remover cualquier campo problemático
+            const cleanData = { ...loteData };
+
+            // Remover campos que no deberían estar en la actualización
+            delete cleanData.detalles;
+            delete cleanData.id;
+            delete cleanData.created_at;
+            delete cleanData.updated_at;
+            delete cleanData.estado;
+            delete cleanData.cantidad_total;
+            delete cleanData.cantidad_recibida;
+            delete cleanData.porcentaje_recibido;
+
+            // Asegurar que los IDs sean enteros
+            if (cleanData.tipo_ingreso) cleanData.tipo_ingreso = parseInt(cleanData.tipo_ingreso);
+            if (cleanData.tipo_servicio) cleanData.tipo_servicio = parseInt(cleanData.tipo_servicio);
+            if (cleanData.proveedor) cleanData.proveedor = parseInt(cleanData.proveedor);
+            if (cleanData.almacen_destino) cleanData.almacen_destino = parseInt(cleanData.almacen_destino);
+
+            console.log('🚨 SERVICE UPDATE - Datos LIMPIADOS:', JSON.stringify(cleanData, null, 2));
+
+            const response = await api.put(ENDPOINTS.LOTE_DETAIL(id), cleanData);
+
+            console.log('✅ SERVICE UPDATE - Respuesta exitosa:', response.data);
             return {
                 success: true,
                 data: response.data
             };
         } catch (error) {
+            console.error('❌ SERVICE UPDATE - Error completo:', error);
+            console.error('❌ SERVICE UPDATE - Error response:', error.response?.data);
+            console.error('❌ SERVICE UPDATE - Error status:', error.response?.status);
+
+            // ✅ MEJOR manejo del error para mostrar el mensaje real del backend
+            let errorMessage = 'Error al actualizar lote';
+
+            if (error.response?.data) {
+                if (error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                } else if (error.response.data.non_field_errors?.[0]) {
+                    errorMessage = error.response.data.non_field_errors[0];
+                } else if (typeof error.response.data === 'object') {
+                    // Si es un objeto con errores de campo
+                    const fieldErrors = Object.entries(error.response.data)
+                        .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                        .join('; ');
+                    errorMessage = fieldErrors || JSON.stringify(error.response.data);
+                } else if (typeof error.response.data === 'string') {
+                    errorMessage = error.response.data;
+                }
+            }
+
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al actualizar lote'
+                error: errorMessage
             };
         }
     }
 
     async deleteLote(id) {
         try {
+            console.log('🌐 SERVICE DELETE - Eliminando lote ID:', id);
+            console.log('🌐 SERVICE DELETE - URL:', ENDPOINTS.LOTE_DETAIL(id));
+
             const response = await api.delete(ENDPOINTS.LOTE_DETAIL(id));
+
+            console.log('✅ SERVICE DELETE - Respuesta exitosa:', response);
             return {
                 success: true,
                 message: 'Lote eliminado correctamente'
             };
         } catch (error) {
+            console.error('❌ SERVICE DELETE - Error completo:', error);
+            console.error('❌ SERVICE DELETE - Response:', error.response?.data);
+            console.error('❌ SERVICE DELETE - Status:', error.response?.status);
+
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al eliminar lote'
+                error: error.response?.data?.message ||
+                    error.response?.data?.detail ||
+                    JSON.stringify(error.response?.data) ||
+                    'Error al eliminar lote'
             };
         }
     }

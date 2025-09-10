@@ -136,6 +136,8 @@ const LotesPage = () => {
         loading,
         error,
         loadLotes,
+        createLote,
+        deleteLote,
         permissions
     } = useLotes();
 
@@ -241,8 +243,10 @@ const LotesPage = () => {
     };
 
     const handleDeleteLote = (lote) => {
+        console.log('🗑️ ELIMINAR - Lote seleccionado:', lote);
         setConfirmAction({ action: 'delete', lote });
         setDialogs({ ...dialogs, confirm: true });
+        console.log('🗑️ ELIMINAR - Dialog de confirmación abierto');
     };
 
     const handleImportLote = (lote) => {
@@ -251,10 +255,26 @@ const LotesPage = () => {
     };
 
     const handleLoteAction = async (action, lote) => {
+        console.log('🎬 LOTE ACTION - Iniciando:', { action, lote: lote?.id });
+
         try {
-            toast.success(`Acción ${action} ejecutada correctamente`);
-            await loadLotes();
+            if (action === 'delete') {
+                console.log('🗑️ ELIMINANDO - Llamando deleteLote para ID:', lote.id);
+
+                const result = await deleteLote(lote.id);
+
+                console.log('🗑️ ELIMINANDO - Resultado:', result);
+
+                if (result.success) {
+                    toast.success(`Lote ${lote.numero_lote} eliminado correctamente`);
+                } else {
+                    toast.error(result.error);
+                }
+            }
+
+            console.log('✅ LOTE ACTION - Completada, lotes recargados');
         } catch (error) {
+            console.error('❌ LOTE ACTION - Error:', error);
             toast.error(`Error al ejecutar ${action}`);
         }
     };
