@@ -156,6 +156,13 @@ const Navbar = () => {
                     permissions: [{ recurso: 'almacenes', accion: 'leer' }],
                     description: 'Modelos Equipo ONU'
                 },
+                {
+                    label: 'Proveedores',
+                    href: '/almacenes/proveedores',
+                    icon: IoCloudUpload,
+                    permissions: [{ recurso: 'almacenes', accion: 'leer' }],
+                    description: 'Modelos Equipo ONU'
+                },
             ]
         },
         {
